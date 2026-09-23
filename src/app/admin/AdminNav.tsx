@@ -11,10 +11,12 @@ import {
   Mail,
   Settings,
   Workflow,
+  LayoutGrid,
 } from "lucide-react";
 
 const links = [
   { href: "/admin", label: "ዳሽቦርድ", icon: LayoutDashboard },
+  { href: "/admin/workspace", label: "ክፍል ዳሽቦርድ", icon: LayoutGrid },
   { href: "/admin/operations", label: "ሂደቶች", icon: Workflow },
   { href: "/admin/articles", label: "አንቀጾች", icon: BookOpen },
   { href: "/admin/announcements", label: "ማስታወቂያዎች", icon: Megaphone },
@@ -28,7 +30,7 @@ export function AdminNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex-1 p-3 space-y-0.5">
+    <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
       {links.map(({ href, label, icon: Icon }) => {
         const active =
           href === "/admin"
