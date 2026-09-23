@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { DOCUMENT_META, DEPARTMENTS } from "@/data/regulations";
 import { EthiopianCross } from "@/components/orthodox/EthiopianCross";
-import { FadeIn, StaggerChildren, StaggerItem } from "@/components/motion/FadeIn";
+import { FadeIn } from "@/components/motion/FadeIn";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { churchFront, churchAerial, christIcon } from "@/data/church-photos";
@@ -263,7 +263,7 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 sm:pt-10 lg:px-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-bold amharic text-[var(--foreground)] sm:text-lg">
             ፈጣን አገናኞች
           </h2>
@@ -274,32 +274,34 @@ export default function HomePage() {
             ሁሉም <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <StaggerChildren className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+        <nav
+          aria-label="ፈጣን አገናኞች"
+          className="divide-y divide-[var(--border)] rounded-2xl border border-[var(--border)] bg-[var(--card)]/40"
+        >
           {quickGrid.map((item) => {
             const Icon = item.icon;
             return (
-              <StaggerItem key={item.href}>
-                <Link
-                  href={item.href}
-                  className="group relative flex min-h-[7rem] flex-col justify-between overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] p-3.5 shadow-sm transition-all active:scale-[0.97] hover:border-[var(--color-burgundy-300)] hover:shadow-md sm:min-h-[7.5rem] sm:p-4"
-                >
-                  <span className="absolute -right-5 -top-5 h-20 w-20 rounded-full bg-[var(--primary)]/5 transition group-hover:bg-[var(--primary)]/10" />
-                  <span className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)] transition group-active:bg-[var(--primary)] group-active:text-white">
-                    <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-3 px-3.5 py-3.5 transition active:bg-[var(--primary)]/5 hover:bg-[var(--muted)]/50 sm:px-4 sm:py-3.5"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+                  <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold leading-tight amharic text-[var(--foreground)]">
+                    {item.title}
                   </span>
-                  <span className="relative mt-2.5">
-                    <span className="block text-[13px] font-bold leading-tight amharic text-[var(--foreground)] sm:text-sm">
-                      {item.title}
-                    </span>
-                    <span className="mt-0.5 block text-[11px] leading-snug text-[var(--foreground)]/50 amharic line-clamp-1">
-                      {item.desc}
-                    </span>
+                  <span className="mt-0.5 block text-[12px] leading-snug text-[var(--foreground)]/50 amharic">
+                    {item.desc}
                   </span>
-                </Link>
-              </StaggerItem>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--foreground)]/30" />
+              </Link>
             );
           })}
-        </StaggerChildren>
+        </nav>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
