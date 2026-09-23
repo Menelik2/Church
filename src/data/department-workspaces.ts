@@ -91,10 +91,12 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_am: "መዝሙር ክፍል",
     title_en: "Hymn / Music",
     is_leadership: false,
-    description_am: "የመዝሙር ቡድን፣ ልምምድ፣ የቅዳሴ መዝሙርና ዝግጅቶች።",
-    modules: ["overview", "choir", "tasks", "reports"],
+    description_am:
+      "ተፈቅደ መዝሙር፣ መደበኛና ሰርግ/ንግስ አገልግሎት፣ ልምምድ ክትትል — ንዑስ፡ አስጠኝ፣ አቴንዲንስ፣ ልብስ፣ ዝማሬ መሳሪያዎች፤ ሩብ ዓመታዊ ሪፖርት።",
+    modules: ["overview", "choir", "attendance", "tasks", "reports"],
     actions: [
       { label_am: "ልምምድ / መዝገብ", href: "/admin/workspace/mezmur?tab=choir", module: "choir" },
+      { label_am: "መገኘት", href: "/admin/workspace/mezmur?tab=attendance", module: "attendance" },
       { label_am: "ተግባራት", href: "/admin/workspace/mezmur?tab=tasks", module: "tasks" },
     ],
   },
