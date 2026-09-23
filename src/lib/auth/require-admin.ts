@@ -24,6 +24,12 @@ export type Profile = {
 };
 
 const ADMIN_ROLES: UserRole[] = ["super_admin", "admin", "editor"];
+const STAFF_ROLES: UserRole[] = [
+  "super_admin",
+  "admin",
+  "editor",
+  "department_manager",
+];
 
 export async function getSessionProfile(): Promise<{
   userId: string;
@@ -44,7 +50,6 @@ export async function getSessionProfile(): Promise<{
       .maybeSingle();
 
     if (error || !profile) {
-      // Auth user exists but no profile row — treat as no access
       return {
         userId: user.id,
         profile: null,
@@ -62,8 +67,16 @@ export async function requireAdmin(
 ): Promise<{ userId: string; profile: Profile }> {
   const session = await getSessionProfile();
 
-  if (!session?.profile || !allowed.includes(session.profile.role)) {
+  if (!session) {
     redirect("/admin/login");
+  }
+
+  if (!session.profile) {
+    redirect("/admin/login?error=noprofile");
+  }
+
+  if (!allowed.includes(session.profile.role)) {
+    redirect("/admin/login?error=forbidden");
   }
 
   if (!session.profile.is_active) {
@@ -71,4 +84,9 @@ export async function requireAdmin(
   }
 
   return { userId: session.userId, profile: session.profile };
+}
+
+/** Leadership + department officers can use workspaces */
+export async function requireStaff() {
+  return requireAdmin(STAFF_ROLES);
 }
