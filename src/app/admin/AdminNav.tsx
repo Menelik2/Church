@@ -10,10 +10,12 @@ import {
   Building2,
   Mail,
   Settings,
+  Workflow,
 } from "lucide-react";
 
 const links = [
   { href: "/admin", label: "ዳሽቦርድ", icon: LayoutDashboard },
+  { href: "/admin/operations", label: "ሂደቶች", icon: Workflow },
   { href: "/admin/articles", label: "አንቀጾች", icon: BookOpen },
   { href: "/admin/announcements", label: "ማስታወቂያዎች", icon: Megaphone },
   { href: "/admin/events", label: "ዝግጅቶች", icon: Calendar },
