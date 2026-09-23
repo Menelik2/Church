@@ -142,7 +142,8 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_am: "ግንኙነት ክፍል",
     title_en: "Relations",
     is_leadership: false,
-    description_am: "ውጫዊ ግንኙነት፣ ግብዣ፣ ደብዳቤና ትብብር።",
+    description_am:
+      "አዲስ አባላት፣ ኮርስ ክትትል፣ ሀዘንና ድስታ፣ ጽዋ፣ ውጭ/ውስጥ ግንኙነት፣ የወንድሞችና እህቶች ጉባኤ — ተጠሪነት ለም/ሰብሳቢ።",
     modules: ["overview", "correspondence", "tasks", "reports"],
     actions: [
       { label_am: "ደብዳቤ / ግንኙነት", href: "/admin/workspace/genegnet?tab=correspondence", module: "correspondence" },
