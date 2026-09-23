@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth/require-admin";
 import { getWorkspace } from "@/data/department-workspaces";
 import { createClient } from "@/lib/supabase/server";
-import { safeSelect } from "@/lib/supabase/safe-count";
 import { TaskPanel } from "@/components/workspace/TaskPanel";
 import { FinancePanel } from "@/components/workspace/FinancePanel";
 import { InventoryPanel } from "@/components/workspace/InventoryPanel";
@@ -21,6 +20,19 @@ import { DeptDisciplinePanel } from "@/components/workspace/DeptDisciplinePanel"
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+/** Accept a pre-built Postgrest filter builder (thenable). */
+async function selectRows<T = Record<string, unknown>>(
+  query: PromiseLike<{ data: T[] | null; error: unknown }>
+): Promise<T[]> {
+  try {
+    const { data, error } = await query;
+    if (error) return [];
+    return (data as T[]) ?? [];
+  } catch {
+    return [];
+  }
+}
 
 type TaskRow = {
   id: string;
@@ -139,7 +151,7 @@ export default async function DepartmentWorkspacePage({
     classAtt,
     charityProjects,
     mediaLogs,
-    mezmurRehearsals,
+    mezmurMembers,
     mezmurAssets,
     mezmurSongs,
     mezmurServices,
@@ -155,7 +167,7 @@ export default async function DepartmentWorkspacePage({
     artsEvents,
     deptDiscipline,
   ] = await Promise.all([
-    safeSelect<TaskRow>(
+    selectRows<TaskRow>(
       supabase
         .from("department_tasks")
         .select("id, title_am, status, priority, due_date")
@@ -163,7 +175,7 @@ export default async function DepartmentWorkspacePage({
         .order("created_at", { ascending: false })
         .limit(50)
     ),
-    safeSelect<FinanceRow>(
+    selectRows<FinanceRow>(
       supabase
         .from("department_finance")
         .select("id, entry_type, category, amount_birr, description_am, entry_date")
@@ -171,7 +183,7 @@ export default async function DepartmentWorkspacePage({
         .order("entry_date", { ascending: false })
         .limit(50)
     ),
-    safeSelect<InventoryRow>(
+    selectRows<InventoryRow>(
       supabase
         .from("department_inventory")
         .select("id, name_am, category, quantity, condition, location")
@@ -179,7 +191,7 @@ export default async function DepartmentWorkspacePage({
         .order("name_am")
         .limit(100)
     ),
-    safeSelect<RecordRow>(
+    selectRows<RecordRow>(
       supabase
         .from("department_records")
         .select("id, title_am, record_type, record_date, body")
@@ -187,125 +199,146 @@ export default async function DepartmentWorkspacePage({
         .order("record_date", { ascending: false })
         .limit(50)
     ),
-    safeSelect<ClassRow>(
+    selectRows<ClassRow>(
       supabase
         .from("department_classes")
         .select("id, title_am, level_am, schedule_note, teacher_name, is_active")
         .eq("department_code", slug)
         .order("title_am")
     ),
-    safeSelect<ClassAttRow>(
+    selectRows<ClassAttRow>(
       supabase
         .from("department_class_attendance")
         .select("id, class_id, attendance_date, present_count, notes")
         .order("attendance_date", { ascending: false })
         .limit(30)
     ),
-    safeSelect<CharityRow>(
+    selectRows<CharityRow>(
       supabase
         .from("charity_projects")
         .select("id, title_am, description, status, budget_birr, spent_birr")
         .order("created_at", { ascending: false })
         .limit(30)
     ),
-    safeSelect<MediaRow>(
+    selectRows<MediaRow>(
       supabase
         .from("media_logs")
         .select("id, title_am, media_type, event_date, notes")
         .order("event_date", { ascending: false })
         .limit(30)
     ),
-    safeSelect(
+    selectRows(
       supabase
-        .from("mezmur_rehearsals")
-        .select("*")
-        .order("rehearsal_date", { ascending: false })
-        .limit(40)
+        .from("mezmur_members")
+        .select("id, full_name_am, voice_part, is_active")
+        .order("full_name_am")
+        .limit(100)
     ),
-    safeSelect(
-      supabase.from("mezmur_assets").select("*").order("name_am").limit(100)
+    selectRows(
+      supabase
+        .from("mezmur_assets")
+        .select("id, asset_type, name_am, quantity, condition, assigned_member_id")
+        .order("name_am")
+        .limit(100)
     ),
-    safeSelect(
-      supabase.from("mezmur_songs").select("*").order("title_am").limit(100)
+    selectRows(
+      supabase
+        .from("mezmur_songs")
+        .select("id, title_am, occasion, is_approved")
+        .order("title_am")
+        .limit(100)
     ),
-    safeSelect(
+    selectRows(
       supabase
         .from("mezmur_services")
-        .select("*")
+        .select("id, service_type, service_date, title_am, location, status")
         .order("service_date", { ascending: false })
         .limit(40)
     ),
-    safeSelect(
+    selectRows(
       supabase
         .from("new_member_register")
-        .select("*")
+        .select("id, full_name_am, phone, registered_at, status, course_enrollment_id")
         .order("registered_at", { ascending: false })
         .limit(50)
     ),
-    safeSelect(
+    selectRows(
       supabase
         .from("course_enrollments")
-        .select("*")
-        .order("enrolled_at", { ascending: false })
+        .select("id, full_name_am, course_name, status, started_at, completed_at")
+        .order("started_at", { ascending: false })
         .limit(50)
     ),
-    safeSelect(
+    selectRows(
       supabase
         .from("property_checkouts")
-        .select("*")
+        .select(
+          "id, item_id, borrower_name, quantity, purpose, checked_out_at, due_date, returned_at, status"
+        )
         .order("checked_out_at", { ascending: false })
         .limit(50)
     ),
-    safeSelect(
+    selectRows(
       supabase
         .from("official_correspondence")
-        .select("*")
+        .select(
+          "id, direction, subject_am, from_party, status, routed_to_dept, received_at"
+        )
         .order("created_at", { ascending: false })
         .limit(40)
     ),
-    safeSelect(
+    selectRows(
       supabase
         .from("chair_approvals")
-        .select("*")
+        .select("id, approval_type, title_am, amount_birr, status")
         .order("created_at", { ascending: false })
         .limit(40)
     ),
-    safeSelect(
+    selectRows(
       supabase
         .from("executive_discipline")
-        .select("*")
+        .select(
+          "id, subject_name_am, reason, step, status, votes_for, votes_against, votes_total"
+        )
         .order("created_at", { ascending: false })
         .limit(30)
     ),
-    safeSelect(
+    selectRows(
       supabase
         .from("annual_action_plans")
-        .select("*")
+        .select("id, year, title_am, status")
         .order("year", { ascending: false })
         .limit(20)
     ),
-    safeSelect(
-      supabase.from("children_groups").select("*").order("name_am").limit(40)
+    selectRows(
+      supabase
+        .from("children_groups")
+        .select("id, band, title_am, facilitator_name, is_active")
+        .order("title_am")
+        .limit(40)
     ),
-    safeSelect(
+    selectRows(
       supabase
         .from("children_activities")
-        .select("*")
+        .select(
+          "id, group_id, activity_type, title_am, activity_date, present_count"
+        )
         .order("activity_date", { ascending: false })
         .limit(40)
     ),
-    safeSelect(
+    selectRows(
       supabase
         .from("arts_events")
-        .select("*")
+        .select(
+          "id, title_am, event_type, event_date, status, participants_note"
+        )
         .order("event_date", { ascending: false })
         .limit(40)
     ),
-    safeSelect(
+    selectRows(
       supabase
-        .from("department_discipline_cases")
-        .select("*")
-        .eq("department_code", slug)
+        .from("disciplinary_cases")
+        .select("id, servant_name, reason, step, status")
         .order("created_at", { ascending: false })
         .limit(30)
     ),
@@ -420,7 +453,14 @@ export default async function DepartmentWorkspacePage({
         <InventoryPanel departmentCode={slug} initial={inventory} />
       )}
       {activeTab === "checkout" && (
-        <CheckoutPanel initialInventory={inventory} initialCheckouts={checkouts} />
+        <CheckoutPanel
+          items={inventory.map((i) => ({
+            id: i.id,
+            name_am: i.name_am,
+            quantity: i.quantity,
+          }))}
+          initial={checkouts as never}
+        />
       )}
       {activeTab === "classes" && (
         <ClassesPanel
@@ -439,38 +479,35 @@ export default async function DepartmentWorkspacePage({
       )}
       {activeTab === "choir" && (
         <MezmurPanel
-          initialRehearsals={mezmurRehearsals}
-          initialAssets={mezmurAssets}
-          initialSongs={mezmurSongs}
-          initialServices={mezmurServices}
+          initialMembers={mezmurMembers as never}
+          initialAssets={mezmurAssets as never}
+          initialSongs={mezmurSongs as never}
+          initialServices={mezmurServices as never}
         />
       )}
       {activeTab === "children" && (
         <ChildrenPanel
-          initialGroups={childrenGroups}
-          initialActivities={childrenActivities}
+          initialGroups={childrenGroups as never}
+          initialActivities={childrenActivities as never}
         />
       )}
-      {activeTab === "arts" && <ArtsPanel initial={artsEvents} />}
+      {activeTab === "arts" && <ArtsPanel initial={artsEvents as never} />}
       {activeTab === "discipline" && (
-        <DeptDisciplinePanel
-          departmentCode={slug}
-          initial={deptDiscipline}
-        />
+        <DeptDisciplinePanel initial={deptDiscipline as never} />
       )}
       {activeTab === "approvals" && (
         <ChairPanel
-          initialCorrespondence={correspondence}
-          initialApprovals={approvals}
-          initialDiscipline={disciplineCases}
-          initialPlans={actionPlans}
+          initialCorr={correspondence as never}
+          initialApprovals={approvals as never}
+          initialDiscipline={disciplineCases as never}
+          initialPlans={actionPlans as never}
         />
       )}
       {activeTab === "correspondence" &&
         (slug === "genegnet" ? (
           <RelationsPanel
-            initialRegister={newMembers}
-            initialCourses={courses}
+            initialRegister={newMembers as never}
+            initialCourses={courses as never}
           />
         ) : (
           <RecordPanel
