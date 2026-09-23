@@ -7,6 +7,7 @@ import { Menu, X, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EthiopianCross } from "@/components/orthodox/EthiopianCross";
 import { motion, AnimatePresence } from "framer-motion";
+import { RippleLink } from "@/components/ui/Ripple";
 
 const navLinks = [
   { href: "/", label: "መነሻ" },
@@ -72,33 +73,35 @@ export function Navbar() {
                 ? pathname === "/"
                 : pathname.startsWith(link.href);
             return (
-              <Link
+              <RippleLink
                 key={link.href}
                 href={link.href}
+                color="primary"
                 className={cn(
-                  "rounded-lg px-3 py-2 text-sm font-medium transition",
+                  "rounded-lg px-3 py-2 text-sm font-medium",
                   active
                     ? "text-[var(--primary)] bg-[var(--primary)]/8"
                     : "text-[var(--foreground)]/70 hover:text-[var(--primary)] hover:bg-[var(--muted)]"
                 )}
               >
                 {link.label}
-              </Link>
+              </RippleLink>
             );
           })}
         </nav>
 
         <div className="flex items-center gap-1">
-          <Link
+          <RippleLink
             href="/search"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--foreground)]/70 active:bg-[var(--muted)]"
+            color="primary"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--foreground)]/70 hover:bg-[var(--muted)]"
             aria-label="ፍለጋ"
           >
             <Search className="h-5 w-5" />
-          </Link>
+          </RippleLink>
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--foreground)]/70 active:bg-[var(--muted)] lg:hidden"
+            className="ripple-host relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl text-[var(--foreground)]/70 transition hover:bg-[var(--muted)] active:scale-95 lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "ዝጋ" : "ምናሌ"}
             aria-expanded={open}
@@ -133,18 +136,19 @@ export function Navbar() {
                       ? pathname === "/"
                       : pathname.startsWith(link.href);
                   return (
-                    <Link
+                    <RippleLink
                       key={link.href}
                       href={link.href}
+                      color={active ? "light" : "primary"}
                       className={cn(
-                        "rounded-2xl px-4 py-3.5 text-center text-sm font-semibold amharic transition active:scale-[0.98]",
+                        "rounded-2xl px-4 py-3.5 text-center text-sm font-semibold amharic",
                         active
                           ? "bg-[var(--primary)] text-white"
-                          : "bg-[var(--muted)] text-[var(--foreground)]"
+                          : "bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--primary)]/10"
                       )}
                     >
                       {link.label}
-                    </Link>
+                    </RippleLink>
                   );
                 })}
               </div>
