@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { DEPARTMENT_WORKSPACES } from "@/data/department-workspaces";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { requireStaff } from "@/lib/auth/require-admin";
 import { Crown, Building2, ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function WorkspaceIndexPage() {
-  await requireAdmin();
+  await requireStaff();
   const leadership = DEPARTMENT_WORKSPACES.filter((d) => d.is_leadership);
   const depts = DEPARTMENT_WORKSPACES.filter((d) => !d.is_leadership);
 
