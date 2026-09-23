@@ -27,19 +27,39 @@ export function Navbar() {
     setOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  if (pathname.startsWith("/admin")) {
+    return (
+      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/95 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-7xl items-center px-4">
+          <Link href="/admin" className="font-semibold text-[var(--primary)] amharic text-sm">
+            አስተዳደር
+          </Link>
+        </div>
+      </header>
+    );
+  }
+
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/90 backdrop-blur-md">
+    <header
+      className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/95 backdrop-blur-xl"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
       <div className="h-0.5 bg-gradient-to-r from-[var(--color-burgundy-800)] via-[var(--color-gold-500)] to-[var(--color-burgundy-800)]" />
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="transition group-hover:scale-110">
-            <EthiopianCross size={36} animate={false} />
-          </div>
-          <div className="hidden sm:block">
-            <span className="block text-sm font-bold text-[var(--primary)] amharic leading-tight">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:h-16 sm:px-6 lg:px-8">
+        <Link href="/" className="flex min-w-0 items-center gap-2">
+          <EthiopianCross size={32} animate={false} />
+          <div className="min-w-0">
+            <span className="block truncate text-[13px] font-bold leading-tight text-[var(--primary)] amharic sm:text-sm">
               ማኅተመ ክርስቶስ
             </span>
-            <span className="block text-xs text-[var(--foreground)]/60">
+            <span className="block truncate text-[10px] leading-tight text-[var(--foreground)]/55 amharic sm:text-xs">
               ሰንበት ት/ቤት
             </span>
           </div>
@@ -56,19 +76,13 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "relative rounded-lg px-3 py-2 text-sm font-medium transition",
+                  "rounded-lg px-3 py-2 text-sm font-medium transition",
                   active
-                    ? "text-[var(--primary)]"
+                    ? "text-[var(--primary)] bg-[var(--primary)]/8"
                     : "text-[var(--foreground)]/70 hover:text-[var(--primary)] hover:bg-[var(--muted)]"
                 )}
               >
                 {link.label}
-                {active && (
-                  <motion.span
-                    layoutId="nav-underline"
-                    className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--color-gold-500)]"
-                  />
-                )}
               </Link>
             );
           })}
@@ -77,14 +91,14 @@ export function Navbar() {
         <div className="flex items-center gap-1">
           <Link
             href="/search"
-            className="rounded-lg p-2 text-[var(--foreground)]/70 hover:bg-[var(--muted)] hover:text-[var(--primary)]"
-            aria-label="ፈልግ"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--foreground)]/70 active:bg-[var(--muted)]"
+            aria-label="ፍለጋ"
           >
             <Search className="h-5 w-5" />
           </Link>
           <button
             type="button"
-            className="lg:hidden rounded-lg p-2 text-[var(--foreground)]/70 hover:bg-[var(--muted)]"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--foreground)]/70 active:bg-[var(--muted)] lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "ዝጋ" : "ምናሌ"}
             aria-expanded={open}
@@ -96,26 +110,46 @@ export function Navbar() {
 
       <AnimatePresence>
         {open && (
-          <motion.nav
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="lg:hidden overflow-hidden border-t border-[var(--border)] bg-[var(--card)]"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-40 bg-black/40 lg:hidden"
+            onClick={() => setOpen(false)}
           >
-            <ul className="px-4 py-3 space-y-1">
-              {navLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="block rounded-lg px-3 py-2.5 text-sm font-medium amharic text-[var(--foreground)]/80 hover:bg-[var(--muted)] hover:text-[var(--primary)]"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </motion.nav>
+            <motion.nav
+              initial={{ y: -12, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="border-b border-[var(--border)] bg-[var(--background)] px-3 py-3 shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="grid grid-cols-2 gap-2">
+                {navLinks.map((link) => {
+                  const active =
+                    link.href === "/"
+                      ? pathname === "/"
+                      : pathname.startsWith(link.href);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "rounded-2xl px-4 py-3.5 text-center text-sm font-semibold amharic transition active:scale-[0.98]",
+                        active
+                          ? "bg-[var(--primary)] text-white"
+                          : "bg-[var(--muted)] text-[var(--foreground)]"
+                      )}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </motion.nav>
+          </motion.div>
         )}
       </AnimatePresence>
     </header>
