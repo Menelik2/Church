@@ -20,6 +20,7 @@ export function MembershipActions({ id }: { id: string }) {
         .single();
       if (app) {
         const now = new Date().toISOString();
+        const journey = app.completed_course ? "servant" : "registered";
         const { data: servant } = await supabase
           .from("servants")
           .insert({
@@ -38,6 +39,7 @@ export function MembershipActions({ id }: { id: string }) {
             church_marriage: app.church_marriage,
             joined_at: now.slice(0, 10),
             onboarding_started_at: now,
+            journey_stage: journey,
           })
           .select("id")
           .single();
@@ -60,6 +62,21 @@ export function MembershipActions({ id }: { id: string }) {
           }));
           await supabase.from("onboarding_progress").upsert(rows, {
             onConflict: "servant_id,step_key",
+          });
+          await supabase.from("journey_events").insert({
+            subject_type: "servant",
+            subject_id: servant.id,
+            from_stage: null,
+            to_stage: journey,
+            note: "membership approved",
+          });
+          await supabase.from("new_member_register").insert({
+            full_name_am: app.full_name_am,
+            phone: app.phone,
+            email: app.email,
+            application_id: app.id,
+            servant_id: servant.id,
+            status: app.completed_course ? "graduated" : "registered",
           });
         }
       }
