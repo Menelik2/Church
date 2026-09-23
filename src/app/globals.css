@@ -79,7 +79,9 @@ body {
   line-height: 1.85;
 }
 
-.prose-am h1, .prose-am h2, .prose-am h3 {
+.prose-am h1,
+.prose-am h2,
+.prose-am h3 {
   font-family: var(--font-serif-eth);
   font-weight: 700;
   color: var(--primary);
@@ -90,7 +92,9 @@ body {
 }
 
 .bg-cross-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%238e1d3d' fill-opacity='0.03'%3E%3Cpath d='M30 0v60M0 30h60'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-color: var(--background);
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%238e1d3d' fill-opacity='0.04'%3E%3Cpath d='M38 8h4v64h-4zM8 28h64v4H8zM28 14h24v3H28z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 .reading-progress {
@@ -106,4 +110,12 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-gold-500);
   outline-offset: 2px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.glow-gold:hover {
+  box-shadow: 0 0 24px rgba(201, 145, 47, 0.25);
 }
