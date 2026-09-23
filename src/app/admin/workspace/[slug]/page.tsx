@@ -11,6 +11,9 @@ import { RecordPanel } from "@/components/workspace/RecordPanel";
 import { ClassesPanel } from "@/components/workspace/ClassesPanel";
 import { CharityPanel } from "@/components/workspace/CharityPanel";
 import { MediaPanel } from "@/components/workspace/MediaPanel";
+import { MezmurPanel } from "@/components/workspace/MezmurPanel";
+import { RelationsPanel } from "@/components/workspace/RelationsPanel";
+import { CheckoutPanel } from "@/components/workspace/CheckoutPanel";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -85,6 +88,52 @@ type MediaRow = {
   notes: string | null;
 };
 
+type MezmurMember = {
+  id: string;
+  full_name_am: string;
+  voice_part: string | null;
+  is_active: boolean;
+};
+
+type MezmurAsset = {
+  id: string;
+  asset_type: string;
+  name_am: string;
+  quantity: number;
+  condition: string | null;
+  assigned_member_id: string | null;
+};
+
+type RegisterRow = {
+  id: string;
+  full_name_am: string;
+  phone: string | null;
+  registered_at: string | null;
+  status: string;
+  course_enrollment_id: string | null;
+};
+
+type CourseRow = {
+  id: string;
+  full_name_am: string;
+  course_name: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+};
+
+type CheckoutRow = {
+  id: string;
+  item_id: string;
+  borrower_name: string;
+  quantity: number;
+  purpose: string | null;
+  checked_out_at: string;
+  due_date: string | null;
+  returned_at: string | null;
+  status: string;
+};
+
 export default async function DepartmentWorkspacePage({
   params,
   searchParams,
@@ -148,6 +197,24 @@ export default async function DepartmentWorkspacePage({
             .select("id, name_am, category, quantity, condition, location")
             .order("created_at", { ascending: false })
             .limit(100)
+        )
+      : [];
+
+  const checkouts =
+    slug === "nebrat"
+      ? await safeSelect<CheckoutRow>(supabase, "property_checkouts", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: CheckoutRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select(
+              "id, item_id, borrower_name, quantity, purpose, checked_out_at, due_date, returned_at, status"
+            )
+            .order("created_at", { ascending: false })
+            .limit(80)
         )
       : [];
 
@@ -235,15 +302,88 @@ export default async function DepartmentWorkspacePage({
         )
       : [];
 
+  const mezmurMembers =
+    slug === "mezmur"
+      ? await safeSelect<MezmurMember>(supabase, "mezmur_members", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: MezmurMember[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select("id, full_name_am, voice_part, is_active")
+            .order("created_at", { ascending: false })
+            .limit(100)
+        )
+      : [];
+
+  const mezmurAssets =
+    slug === "mezmur"
+      ? await safeSelect<MezmurAsset>(supabase, "mezmur_assets", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: MezmurAsset[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select(
+              "id, asset_type, name_am, quantity, condition, assigned_member_id"
+            )
+            .order("created_at", { ascending: false })
+            .limit(100)
+        )
+      : [];
+
+  const newMembers =
+    slug === "genegnet"
+      ? await safeSelect<RegisterRow>(supabase, "new_member_register", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: RegisterRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select(
+              "id, full_name_am, phone, registered_at, status, course_enrollment_id"
+            )
+            .order("created_at", { ascending: false })
+            .limit(100)
+        )
+      : [];
+
+  const courses =
+    slug === "genegnet"
+      ? await safeSelect<CourseRow>(supabase, "course_enrollments", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: CourseRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select(
+              "id, full_name_am, course_name, status, started_at, completed_at"
+            )
+            .order("created_at", { ascending: false })
+            .limit(100)
+        )
+      : [];
+
   const tabs: { id: string; label: string }[] = [{ id: "overview", label: "አጠቃላይ" }];
   if (ws.modules.includes("tasks")) tabs.push({ id: "tasks", label: "ተግባራት" });
   if (ws.modules.includes("finance")) tabs.push({ id: "finance", label: "ሂሳብ" });
-  if (ws.modules.includes("inventory")) tabs.push({ id: "inventory", label: "ንብረት" });
+  if (ws.modules.includes("inventory")) {
+    tabs.push({ id: "inventory", label: "ንብረት" });
+    tabs.push({ id: "checkout", label: "ውሰት" });
+  }
   if (ws.modules.includes("classes")) tabs.push({ id: "classes", label: "ክፍሎች" });
-  if (ws.modules.includes("attendance"))
+  if (ws.modules.includes("attendance") && slug !== "mezmur")
     tabs.push({ id: "attendance", label: "መገኝት" });
   if (ws.modules.includes("correspondence"))
-    tabs.push({ id: "correspondence", label: "ደብዳቤ" });
+    tabs.push({ id: "correspondence", label: "ደብዳቤ / መመዝገቢያ" });
   if (ws.modules.includes("media")) tabs.push({ id: "media", label: "ሚዲያ" });
   if (ws.modules.includes("charity")) tabs.push({ id: "charity", label: "በጎ አድራጎት" });
   if (ws.modules.includes("choir")) tabs.push({ id: "choir", label: "መዝሙር" });
@@ -315,28 +455,50 @@ export default async function DepartmentWorkspacePage({
       )}
       {activeTab === "finance" && <FinancePanel initial={finance} />}
       {activeTab === "inventory" && <InventoryPanel initial={inventory} />}
+      {activeTab === "checkout" && (
+        <CheckoutPanel
+          items={inventory.map((i) => ({
+            id: i.id,
+            name_am: i.name_am,
+            quantity: i.quantity,
+          }))}
+          initial={checkouts}
+        />
+      )}
       {activeTab === "classes" && (
         <ClassesPanel
           initialClasses={educationClasses}
           initialAttendance={classAttendance}
         />
       )}
-      {(activeTab === "attendance" || activeTab === "choir") && (
+      {activeTab === "attendance" && (
         <RecordPanel
           departmentCode={slug}
           recordType="attendance"
-          title={activeTab === "choir" ? "የመዝሙር ልምምድ መዝገብ" : "የመገኝት መዝገብ"}
+          title="የመገኝት መዝገብ"
           initial={records.filter((r) => r.record_type === "attendance")}
         />
       )}
-      {activeTab === "correspondence" && (
-        <RecordPanel
-          departmentCode={slug}
-          recordType="correspondence"
-          title="ደብዳቤና ማስታወሻ"
-          initial={records.filter((r) => r.record_type === "correspondence")}
+      {activeTab === "choir" && (
+        <MezmurPanel
+          initialMembers={mezmurMembers}
+          initialAssets={mezmurAssets}
         />
       )}
+      {activeTab === "correspondence" &&
+        (slug === "genegnet" ? (
+          <RelationsPanel
+            initialRegister={newMembers}
+            initialCourses={courses}
+          />
+        ) : (
+          <RecordPanel
+            departmentCode={slug}
+            recordType="correspondence"
+            title="ደብዳቤና ማስታወሻ"
+            initial={records.filter((r) => r.record_type === "correspondence")}
+          />
+        ))}
       {activeTab === "media" && <MediaPanel initial={mediaLogs} />}
       {activeTab === "charity" && <CharityPanel initial={charityProjects} />}
     </div>
