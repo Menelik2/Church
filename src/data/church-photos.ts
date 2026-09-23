@@ -1,4 +1,3 @@
-/** Real church photos (SVG wrappers with embedded JPEG) */
-export const churchFront = "/images/church-front.svg";
-export const churchAerial = "/images/church-aerial.svg";
-export const christIcon = "/images/christ-icon.svg";
+export { churchFront } from "./photo-church-front";
+export { churchAerial } from "./photo-church-aerial";
+export { christIcon } from "./photo-christ-icon";
