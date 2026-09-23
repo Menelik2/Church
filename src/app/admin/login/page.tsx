@@ -3,6 +3,8 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatAppError, type AppError } from "@/lib/errors";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 function LoginForm() {
   const router = useRouter();
@@ -13,34 +15,76 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(
-    errorParam === "inactive"
-      ? "መለያዎ አልተንቀሳቀሰም። አስተዳዳሪን ያነጋግሩ።"
-      : errorParam === "auth"
-        ? "ማረጋገጫ አልተሳካም። እንደገና ይሞክሩ።"
-        : null
-  );
+  const [error, setError] = useState<AppError | null>(() => {
+    if (errorParam === "inactive") {
+      return {
+        messageAm: "መለያዎ አልተንቀሳቀሰም",
+        messageEn: "Account inactive",
+        hintAm: "አስተዳዳሪን ያነጋግሩ ወይም is_active = true ያድርጉ።",
+      };
+    }
+    if (errorParam === "auth") {
+      return {
+        messageAm: "ማረጋገጫ አልተሳካም",
+        messageEn: "Authentication failed",
+        hintAm: "እንደገና ይሞክሩ።",
+      };
+    }
+    return null;
+  });
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      if (
+        !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      ) {
+        setError({
+          messageAm: "Supabase አልተዋቀረም",
+          messageEn: "Missing environment variables",
+          hintAm:
+            "በVercel ላይ NEXT_PUBLIC_SUPABASE_URL እና NEXT_PUBLIC_SUPABASE_ANON_KEY ያክሉ።",
+        });
+        return;
+      }
 
-    setLoading(false);
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-    if (authError) {
-      setError(authError.message);
-      return;
+      if (authError) {
+        const mapped = formatAppError(authError);
+        // Friendlier auth messages
+        if (
+          authError.message?.toLowerCase().includes("invalid login") ||
+          authError.message?.toLowerCase().includes("invalid credentials")
+        ) {
+          setError({
+            messageAm: "ኢሜይል ወይም የይለፍ ቃል ትክክል አይደለም",
+            messageEn: "Invalid login credentials",
+            code: authError.status?.toString(),
+            detail: authError.message,
+            hintAm: "የይለፍ ቃልዎን በSupabase Auth → Users ላይ ያረጋግጡ።",
+          });
+        } else {
+          setError(mapped);
+        }
+        return;
+      }
+
+      router.push(next);
+      router.refresh();
+    } catch (err) {
+      setError(formatAppError(err));
+    } finally {
+      setLoading(false);
     }
-
-    router.push(next);
-    router.refresh();
   }
 
   return (
@@ -75,9 +119,7 @@ function LoginForm() {
       </div>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 dark:bg-red-950/30 rounded-lg px-3 py-2">
-          {error}
-        </p>
+        <ErrorBanner error={error} onDismiss={() => setError(null)} />
       )}
 
       <button

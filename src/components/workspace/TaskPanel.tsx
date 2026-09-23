@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { formatAppError, type AppError } from "@/lib/errors";
+import { ErrorBanner, SuccessBanner } from "@/components/ui/ErrorBanner";
 import { Plus } from "lucide-react";
 
 type Task = {
@@ -22,49 +24,69 @@ export function TaskPanel({
   const [tasks, setTasks] = useState(initial);
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
 
   async function addTask(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
     setSaving(true);
-    setMsg(null);
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("department_tasks")
-      .insert({
-        department_code: departmentCode,
-        title_am: title.trim(),
-        status: "open",
-        priority: "normal",
-      })
-      .select("id, title_am, status, priority, due_date")
-      .single();
-    setSaving(false);
-    if (error) {
-      setMsg(error.message);
-      return;
+    setError(null);
+    setOk(null);
+    try {
+      const supabase = createClient();
+      const { data, error: dbErr } = await supabase
+        .from("department_tasks")
+        .insert({
+          department_code: departmentCode,
+          title_am: title.trim(),
+          status: "open",
+          priority: "normal",
+        })
+        .select("id, title_am, status, priority, due_date")
+        .single();
+
+      if (dbErr) {
+        setError(formatAppError(dbErr));
+        return;
+      }
+      if (data) setTasks((t) => [data as Task, ...t]);
+      setTitle("");
+      setOk("ተግባሩ ተመዝግቧል");
+    } catch (err) {
+      setError(formatAppError(err));
+    } finally {
+      setSaving(false);
     }
-    if (data) setTasks((t) => [data as Task, ...t]);
-    setTitle("");
-    setMsg("ተመዝግቧል");
   }
 
   async function setStatus(id: string, status: string) {
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("department_tasks")
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq("id", id);
-    if (!error) {
+    setError(null);
+    try {
+      const supabase = createClient();
+      const { error: dbErr } = await supabase
+        .from("department_tasks")
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (dbErr) {
+        setError(formatAppError(dbErr));
+        return;
+      }
       setTasks((list) =>
         list.map((t) => (t.id === id ? { ...t, status } : t))
       );
+    } catch (err) {
+      setError(formatAppError(err));
     }
   }
 
   return (
     <div className="space-y-4">
+      {error && (
+        <ErrorBanner error={error} onDismiss={() => setError(null)} />
+      )}
+      {ok && <SuccessBanner message={ok} />}
+
       <form onSubmit={addTask} className="flex gap-2">
         <input
           value={title}
@@ -80,7 +102,7 @@ export function TaskPanel({
           <Plus className="h-4 w-4" /> አክል
         </button>
       </form>
-      {msg && <p className="text-xs text-emerald-600 amharic">{msg}</p>}
+
       <ul className="space-y-2">
         {tasks.length === 0 && (
           <li className="text-sm text-[var(--foreground)]/50 amharic py-6 text-center">
