@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { redirect } from "next/navigation";
+import { requireStaff } from "@/lib/auth/require-admin";
 import { createClient } from "@/lib/supabase/server";
 import { safeCount } from "@/lib/supabase/safe-count";
 import { DEPARTMENT_WORKSPACES } from "@/data/department-workspaces";
@@ -18,7 +19,12 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const { profile } = await requireAdmin();
+  const { profile } = await requireStaff();
+
+  if (profile.role === "department_manager") {
+    redirect("/admin/workspace");
+  }
+
   const supabase = await createClient();
 
   const [articlesCount, announcementsCount, unreadMessages, eventsCount] =
@@ -38,7 +44,7 @@ export default async function AdminDashboard() {
   const cards = [
     { label: "አንቀጾች", value: articlesCount, href: "/admin/articles", icon: BookOpen },
     { label: "ማስታወቂያዎች", value: announcementsCount, href: "/admin/announcements", icon: Megaphone },
-    { label: "ያልተነበቡ መልዕክቶች", value: unreadMessages, href: "/admin/messages", icon: Mail },
+    { label: "ያልተነቡት መልዕክቶች", value: unreadMessages, href: "/admin/messages", icon: Mail },
     { label: "ዝግጅቶች", value: eventsCount, href: "/admin/events", icon: Calendar },
   ];
 
@@ -49,7 +55,7 @@ export default async function AdminDashboard() {
     <div className="pb-16">
       <h1 className="text-2xl font-bold text-[var(--primary)] amharic">ዳሽቦርድ</h1>
       <p className="mt-1 text-sm text-[var(--foreground)]/60">
-        እንኳን ደህና መጡ፣{" "}
+        እንክን ደህና መጡ፣{" "}
         {profile.full_name_am || profile.full_name_en || profile.email}
         <span className="ml-2 rounded-full bg-[var(--primary)]/10 px-2 py-0.5 text-xs text-[var(--primary)]">
           {profile.role}
