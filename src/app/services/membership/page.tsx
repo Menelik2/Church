@@ -5,14 +5,14 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 const criteria = [
-  { key: "is_orthodox", label: "የኢትዮጵያ ኦርቶድክስ ተዋሕዶ ሃይማኖት ተከታይ ነኝ" },
-  { key: "completed_course", label: "የተከታታይ ትምህርት (ኮርስ) አጠናቄያለሁ / እየተማርኩ ነኝ" },
-  { key: "accepts_doctrine", label: "ዶግማ፣ ቀኖና እና ሥርዓት ለመጠበቅ ፈቃደኛ ነኝ" },
+  { key: "is_orthodox", label: "የኢትዮጵያ ኦርጦዶክስ ተዋሕዶ ሃይማኖት ተከታይ ነኝ" },
+  { key: "completed_course", label: "የተከታታይ ትምሕርት (ኮርስ) አጠናቄያለሁ / እየተማርኩ ነኝ" },
+  { key: "accepts_doctrine", label: "ዶግማ፣ ቀኖና እና ስርዓት ለመጠበቅ ፈቃደኛ ነኝ" },
   { key: "respects_bylaws", label: "የውስጥ መተዳደሪያ ደንብ አከብራለሁ" },
-  { key: "proper_attire", label: "ሥርዓተ ቤተ ክርስቲያን የጠበቀ አለባበስ እከተላለሁ" },
-  { key: "has_confessor", label: "የንስኃ አባት አለኝና በንስኃ ህይወት እመላለሳለሁ" },
-  { key: "will_pay_monthly", label: "ወርሃዊ መዋጮ ለማዋጣት ዝግጁ ነኝ" },
-  { key: "church_marriage", label: "ጋብቻዬ በሥርዓተ ቤተ ክርስቲያን ነው (ወይም አይመለከተኝም)" },
+  { key: "proper_attire", label: "ስርዓተ ቤተ ክርስቲያን የጠበቀ አለባበስ እከተላለሁ" },
+  { key: "has_confessor", label: "የንስያ አባት አለኝና በንስያ ህይወት እመላለሳለሁ" },
+  { key: "will_pay_monthly", label: "ወርሃዊ መዋጆ ለማዋጣት ዝግጅ ነኝ" },
+  { key: "church_marriage", label: "ጋብቻዬ በስርዓተ ቤተ ክርስቲያን ነው (ወይም አይመለከተኝም)" },
 ] as const;
 
 export default function MembershipApplicationPage() {
@@ -30,36 +30,45 @@ export default function MembershipApplicationPage() {
     e.preventDefault();
     setStatus("loading");
     setErr(null);
-    const supabase = createClient();
-    const { error } = await supabase.from("membership_applications").insert({
-      full_name_am: name.trim(),
-      phone: phone.trim() || null,
-      email: email.trim() || null,
-      age: age ? parseInt(age, 10) : null,
-      is_orthodox: !!checks.is_orthodox,
-      completed_course: !!checks.completed_course,
-      accepts_doctrine: !!checks.accepts_doctrine,
-      respects_bylaws: !!checks.respects_bylaws,
-      proper_attire: !!checks.proper_attire,
-      has_confessor: !!checks.has_confessor,
-      will_pay_monthly: !!checks.will_pay_monthly,
-      church_marriage: !!checks.church_marriage,
-      preferred_stage: stage || null,
-      message: message.trim() || null,
-      status: "pending",
-    });
-    if (error) {
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from("membership_applications").insert({
+        full_name_am: name.trim(),
+        phone: phone.trim() || null,
+        email: email.trim() || null,
+        age: age ? parseInt(age, 10) : null,
+        is_orthodox: !!checks.is_orthodox,
+        completed_course: !!checks.completed_course,
+        accepts_doctrine: !!checks.accepts_doctrine,
+        respects_bylaws: !!checks.respects_bylaws,
+        proper_attire: !!checks.proper_attire,
+        has_confessor: !!checks.has_confessor,
+        will_pay_monthly: !!checks.will_pay_monthly,
+        church_marriage: !!checks.church_marriage,
+        preferred_stage: stage || null,
+        message: message.trim() || null,
+        status: "pending",
+      });
+      if (error) {
+        setStatus("error");
+        setErr(error.message);
+        return;
+      }
+      setStatus("ok");
+    } catch (e) {
       setStatus("error");
-      setErr(error.message);
-      return;
+      setErr(
+        e instanceof Error
+          ? e.message
+          : "ጥያቄውን መላክ አልተሳካም። እንደገና ይሞክሩ።"
+      );
     }
-    setStatus("ok");
   }
 
   if (status === "ok") {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <p className="amharic text-lg font-medium text-emerald-700">ጥያቄዎ ተልኳል። አስተዳዳሪዎች ይመረምራሉ።</p>
+        <p className="amharic text-lg font-medium text-emerald-700">ጥያቄዎ ተልኩል። አስተዳዳሪዎች ይመረምራሉ።</p>
         <Link href="/services" className="mt-4 inline-block text-[var(--primary)] hover:underline">← ተመለስ</Link>
       </div>
     );
@@ -102,7 +111,7 @@ export default function MembershipApplicationPage() {
           <label className="block text-sm font-medium mb-1">የመድረክ አገልግሎት</label>
           <select value={stage} onChange={(e) => setStage(e.target.value)} className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm">
             <option value="">— ይምረጡ —</option>
-            <option value="timihirt">ትምህርት</option>
+            <option value="timihirt">ትምሕርት</option>
             <option value="kine-tibeb">ኪነ ጥበብ</option>
             <option value="mezmur">መዝሙር</option>
           </select>
