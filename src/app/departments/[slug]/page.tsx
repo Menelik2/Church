@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DEPARTMENTS, ARTICLES } from "@/data/regulations";
+import { DEPARTMENTS } from "@/data/regulations";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -40,8 +40,8 @@ export default async function DepartmentDetailPage({ params }: Props) {
 
       <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 amharic leading-relaxed">
         <p>
-          ይህ ክፍል የማኅተመ ክርስቶስ ሰንበት ት/ቤት የሥራ አስፈጻሚ መዋቅር አካል ነው
-          (አንቀጽ 10)። ዝርዝር ተግባርና ኃላፊነት በውስጥ መተዳደሪያ ሕግና ደንብ ውስጥ
+          ይህ ክፍል የማእተመ ክርስቶስ ሰንበት ት/ቤት የስራ አስፈጻሚ መዋቅር አካል ነው
+          (አንቀጽ 10)። ዝርዝር ተግባርና ኣላፊነት በውስጥ መተዳደሪያ ሕግና ደንብ ውስጥ
           ተቀምጧል።
         </p>
         <p className="mt-4 text-sm text-[var(--foreground)]/70">
