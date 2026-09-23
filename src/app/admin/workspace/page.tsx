@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { DEPARTMENT_WORKSPACES } from "@/data/department-workspaces";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { DEPARTMENT_WORKSPACES } from "../../../data/department-workspaces";
+import { requireAdmin } from "../../../lib/auth/require-admin";
 import { Crown, Building2, ChevronRight } from "lucide-react";
 
 export default async function WorkspaceIndexPage() {
