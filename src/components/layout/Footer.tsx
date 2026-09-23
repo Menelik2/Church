@@ -4,7 +4,7 @@ import { DOCUMENT_META } from "@/data/regulations";
 
 export function Footer() {
   return (
-    <footer className="border-t border-[var(--border)] bg-[var(--color-burgundy-950)] text-white">
+    <footer className="pb-20 lg:pb-0 border-t border-[var(--border)] bg-[var(--color-burgundy-950)] text-white">
       <div className="h-0.5 bg-gradient-to-r from-transparent via-[var(--color-gold-500)] to-transparent" />
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
