@@ -13,6 +13,7 @@ import {
   Vote,
   ClipboardList,
   UserCheck,
+  GitBranch,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export default async function OperationsHubPage() {
     activeServants,
     openElections,
     onboardingOpen,
+    activeVisitors,
   ] = await Promise.all([
     safeCount(supabase, "membership_applications", (q) =>
       (q as { eq: (c: string, v: string) => unknown }).eq("status", "pending")
@@ -55,9 +57,11 @@ export default async function OperationsHubPage() {
       };
       return qq.eq("status", "active").is("onboarding_completed_at", null);
     }),
+    safeCount(supabase, "visitors", (q) =>
+      (q as { eq: (c: string, v: string) => unknown }).eq("status", "active")
+    ),
   ]);
 
-  // Missed 2+ weeks: active servants with no present in last 14 days
   let attendanceAlerts = 0;
   try {
     const [{ data: active }, { data: presents }] = await Promise.all([
@@ -99,6 +103,13 @@ export default async function OperationsHubPage() {
   }
 
   const cards = [
+    {
+      href: "/admin/operations/journey",
+      label: "የአባል ጉዞ",
+      value: activeVisitors,
+      icon: GitBranch,
+      hint: "ጎብኝ → አገልጋይ",
+    },
     {
       href: "/admin/operations/membership",
       label: "የአባልነት ጥያቄዎች",
