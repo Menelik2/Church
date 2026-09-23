@@ -11,6 +11,7 @@ import {
   Wallet,
   FileText,
   Vote,
+  ClipboardList,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export default async function OperationsHubPage() {
     upcomingMeetings,
     activeServants,
     openElections,
+    onboardingOpen,
   ] = await Promise.all([
     safeCount(supabase, "membership_applications", (q) =>
       (q as { eq: (c: string, v: string) => unknown }).eq("status", "pending")
@@ -43,6 +45,12 @@ export default async function OperationsHubPage() {
       (q as { eq: (c: string, v: string) => unknown }).eq("status", "active")
     ),
     safeCount(supabase, "election_cycles"),
+    safeCount(supabase, "servants", (q) => {
+      const qq = q as {
+        eq: (c: string, v: string) => { is: (c: string, v: null) => unknown };
+      };
+      return qq.eq("status", "active").is("onboarding_completed_at", null);
+    }),
   ]);
 
   const cards = [
@@ -52,6 +60,13 @@ export default async function OperationsHubPage() {
       value: pendingMembership,
       icon: UserPlus,
       hint: "በመጠባበቅ",
+    },
+    {
+      href: "/admin/operations/onboarding",
+      label: "አዲስ አባል መቀበያ",
+      value: onboardingOpen,
+      icon: ClipboardList,
+      hint: "checklist + አማካሪ",
     },
     {
       href: "/admin/operations/weddings",
