@@ -6,11 +6,13 @@ import { AdminSignOut } from "./AdminSignOut";
 import { AdminMobileNav } from "./AdminMobileNav";
 
 export const metadata = {
-  title: "አስተዳደር · ማኅተመ ክርስቶስ",
+  title: "አስተዳደር · ማእተመ ክርስቶስ",
   robots: { index: false, follow: false },
 };
 
 export const dynamic = "force-dynamic";
+
+const STAFF_ROLES = ["super_admin", "admin", "editor", "department_manager"];
 
 export default async function AdminLayout({
   children,
@@ -27,13 +29,12 @@ export default async function AdminLayout({
 async function AdminShell({ children }: { children: React.ReactNode }) {
   const session = await getSessionProfile();
 
-  // Login page (no session yet)
   if (!session?.profile) {
     return <>{children}</>;
   }
 
   const role = session.profile.role;
-  const isStaff = ["super_admin", "admin", "editor"].includes(role);
+  const isStaff = STAFF_ROLES.includes(role);
 
   if (!isStaff) {
     redirect("/");
