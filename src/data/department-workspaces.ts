@@ -196,11 +196,13 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_am: "ንብረት ክፍል",
     title_en: "Property",
     is_leadership: false,
-    description_am: "የንብረት መዝገብ፣ ብዛት፣ ሁኔታና አካባቢ።",
+    description_am:
+      "ቋሚና አላቂ ንብረት፣ መዝገብ፣ እቃ ቤት፣ የውሰት ፍርም፣ ጥገናና ንጽህና — ተጠሪነት ለሰብሳቢ፤ ንዑስ፡ እቃ፣ ቁጥጥር፣ ጥገናና ንጽህና።",
     modules: ["overview", "inventory", "tasks", "reports"],
     actions: [
       { label_am: "ንብረት መዝገብ", href: "/admin/workspace/nebrat?tab=inventory", module: "inventory" },
       { label_am: "ተግባራት", href: "/admin/workspace/nebrat?tab=tasks", module: "tasks" },
+      { label_am: "ሪፖርት", href: "/admin/operations/reports", module: "reports" },
     ],
   },
 ];
