@@ -19,6 +19,7 @@ export type DeptModule =
   | "correspondence"
   | "choir"
   | "children"
+  | "arts"
   | "approvals";
 
 export type DepartmentWorkspace = {
@@ -45,7 +46,6 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
       { label_am: "ስብሰባዎች", href: "/admin/operations/meetings", module: "meetings" },
       { label_am: "የአባልነት ፈቃዶች", href: "/admin/operations/membership", module: "approvals" },
       { label_am: "የአባል ጉዞ", href: "/admin/operations/journey", module: "approvals" },
-      { label_am: "የክፍል ሪፖርቶች", href: "/admin/operations/reports", module: "reports" },
       { label_am: "ተግባራት", href: "/admin/workspace/sebabi?tab=tasks", module: "tasks" },
     ],
   },
@@ -94,10 +94,10 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_en: "Hymn / Music",
     is_leadership: false,
     description_am:
-      "ተፈቅደ መዝሙር፣ መደበኛና ሰርግ/ንግስ አገልግሎት፣ ልምምድ ክትትል — ንዑስ፡ አስጠኝ፣ አቴንዲንስ፣ ልብስ፣ ዝማሬ መሳሪያዎች፤ ሩብ ዓመታዊ ሪፖርት።",
+      "ተፈቅደ መዝሙር፣ ልምምድ መገኘት፣ ሰርግ/ንግስ አገልግሎት፣ መሳሪያ/ልብስ — ንዑስ፡ አስጠኝ፣ አቴንዲንስ፣ ልብስ፣ ዝማሬ መሳሪያዎች።",
     modules: ["overview", "choir", "attendance", "tasks", "reports"],
     actions: [
-      { label_am: "ልምምድ / መዝገብ", href: "/admin/workspace/mezmur?tab=choir", module: "choir" },
+      { label_am: "ልምምድ / መዝገብ / አገልግሎት", href: "/admin/workspace/mezmur?tab=choir", module: "choir" },
       { label_am: "ተግባራት", href: "/admin/workspace/mezmur?tab=tasks", module: "tasks" },
     ],
   },
@@ -107,8 +107,9 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_en: "Arts",
     is_leadership: false,
     description_am: "የኪነጥበብ ዝግጅት፣ ትርኢትና ስልጠና።",
-    modules: ["overview", "tasks", "reports"],
+    modules: ["overview", "arts", "tasks", "reports"],
     actions: [
+      { label_am: "ዝግጅቶች", href: "/admin/workspace/kine-tibeb?tab=arts", module: "arts" },
       { label_am: "ተግባራት", href: "/admin/workspace/kine-tibeb?tab=tasks", module: "tasks" },
       { label_am: "ሪፖርት", href: "/admin/operations/reports", module: "reports" },
     ],
@@ -132,11 +133,12 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_en: "Children",
     is_leadership: false,
     description_am:
-      "ደቂቅ (7–10) እና ማዕከላዊያን (11–17) — ትምህርት፣ ግብረገብ፣ ሥርዓተ-ትምህርት፣ ድራማና ሐዋርያዊ ጉዞ፤ ሩብ ዓመታዊ ሪፖርት።",
+      "ደቂቅ (7–10) እና ማዕከላዊያን (11–17) — ትምህርት፣ ድራማ፣ ሐዋርያዊ ጉዞ፣ ክፍሎችና መገኘት።",
     modules: ["overview", "children", "classes", "attendance", "tasks"],
     actions: [
-      { label_am: "መገኘት", href: "/admin/workspace/hitsanat?tab=attendance", module: "attendance" },
+      { label_am: "ደቂቅ / ማዕከላዊያን", href: "/admin/workspace/hitsanat?tab=children", module: "children" },
       { label_am: "ክፍሎች", href: "/admin/workspace/hitsanat?tab=classes", module: "classes" },
+      { label_am: "መገኘት", href: "/admin/workspace/hitsanat?tab=attendance", module: "attendance" },
       { label_am: "ተግባራት", href: "/admin/workspace/hitsanat?tab=tasks", module: "tasks" },
     ],
   },
@@ -146,7 +148,7 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_en: "Relations",
     is_leadership: false,
     description_am:
-      "አዲስ አባላት፣ ኮርስ ክትትል፣ ሀዘንና ድስታ፣ ጽዋ፣ ውጭ/ውስጥ ግንኙነት፣ የወንድሞችና እህቶች ጉባኤ — ተጠሪነት ለም/ሰብሳቢ።",
+      "አዲስ አባላት፣ ኮርስ ክትትል፣ ሀዘንና ድስታ፣ ጽዋ፣ ውጭ/ውስጥ ግንኙነት — ተጠሪነት ለም/ሰብሳቢ።",
     modules: ["overview", "correspondence", "tasks", "reports"],
     actions: [
       { label_am: "መመዝገቢያ / ኮርስ", href: "/admin/workspace/genegnet?tab=correspondence", module: "correspondence" },
@@ -162,7 +164,7 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     description_am: "የክርስቲያናዊ ሕይወት ክትትል፣ ዲስፕሊንና ማረሚያ — ተጠሪነት ለሰብሳቢ።",
     modules: ["overview", "discipline", "tasks", "reports"],
     actions: [
-      { label_am: "ዲስፕሊን", href: "/admin/operations/discipline", module: "discipline" },
+      { label_am: "ክትትል / ዲስፕሊን", href: "/admin/workspace/kutator?tab=discipline", module: "discipline" },
       { label_am: "ተግባራት", href: "/admin/workspace/kutator?tab=tasks", module: "tasks" },
       { label_am: "ሪፖርት", href: "/admin/operations/reports", module: "reports" },
     ],
@@ -173,7 +175,7 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_en: "Development & Charity",
     is_leadership: false,
     description_am:
-      "የገቢ ማስገኛ፣ የልማት ፕሮጀክት፣ በጎ አድራጎት፣ ሙያ፣ ጽዳትና ግቢ ማስዋብ — ንዑስ ክፍሎችን በየወሩ መገምገምና ሩብ ዓመታዊ ሪፖርት።",
+      "የገቢ ማስገኛ፣ የልማት ፕሮጀክት፣ በጎ አድራጎት፣ ሙያ፣ ጽዳትና ግቢ ማስዋብ።",
     modules: ["overview", "charity", "finance", "tasks", "reports"],
     actions: [
       { label_am: "ፕሮጀክቶች / በጎ አድራጎት", href: "/admin/workspace/limat?tab=charity", module: "charity" },
@@ -200,13 +202,12 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_en: "Property",
     is_leadership: false,
     description_am:
-      "ቋሚና አላቂ ንብረት፣ መዝገብ፣ እቃ ቤት፣ የውሰት ፍርም፣ ጥገናና ንጽህና — ተጠሪነት ለሰብሳቢ፤ ንዑስ፡ እቃ፣ ቁጥጥር፣ ጥገናና ንጽህና።",
+      "ቋሚና አላቂ ንብረት፣ መዝገብ፣ እቃ ቤት፣ የውሰት ፍርም፣ ጥገናና ንጽህና — ተጠሪነት ለሰብሳቢ።",
     modules: ["overview", "inventory", "tasks", "reports"],
     actions: [
       { label_am: "ንብረት መዝገብ", href: "/admin/workspace/nebrat?tab=inventory", module: "inventory" },
       { label_am: "ውሰት / መመለስ", href: "/admin/workspace/nebrat?tab=checkout", module: "inventory" },
       { label_am: "ተግባራት", href: "/admin/workspace/nebrat?tab=tasks", module: "tasks" },
-      { label_am: "ሪፖርት", href: "/admin/operations/reports", module: "reports" },
     ],
   },
 ];

@@ -21,21 +21,57 @@ type Asset = {
   assigned_member_id: string | null;
 };
 
+type Song = {
+  id: string;
+  title_am: string;
+  occasion: string | null;
+  is_approved: boolean;
+};
+
+type Service = {
+  id: string;
+  service_type: string;
+  service_date: string;
+  title_am: string | null;
+  location: string | null;
+  status: string;
+};
+
+const SVC_AM: Record<string, string> = {
+  regular: "መደበኛ",
+  wedding: "ሰርግ እጀባ",
+  ngus: "ንግስ",
+  parish: "ጉባኤ / አጥቢያ",
+  other: "ሌላ",
+};
+
 export function MezmurPanel({
   initialMembers,
   initialAssets,
+  initialSongs = [],
+  initialServices = [],
 }: {
   initialMembers: Member[];
   initialAssets: Asset[];
+  initialSongs?: Song[];
+  initialServices?: Service[];
 }) {
   const [members, setMembers] = useState(initialMembers);
   const [assets, setAssets] = useState(initialAssets);
+  const [songs, setSongs] = useState(initialSongs);
+  const [services, setServices] = useState(initialServices);
   const [name, setName] = useState("");
   const [voice, setVoice] = useState("");
   const [assetName, setAssetName] = useState("");
   const [assetType, setAssetType] = useState<"instrument" | "costume">(
     "instrument"
   );
+  const [songTitle, setSongTitle] = useState("");
+  const [songOcc, setSongOcc] = useState("");
+  const [svcType, setSvcType] = useState("regular");
+  const [svcTitle, setSvcTitle] = useState("");
+  const [svcLoc, setSvcLoc] = useState("");
+  const [svcDate, setSvcDate] = useState("");
   const [rehearsalNote, setRehearsalNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
@@ -103,6 +139,91 @@ export function MezmurPanel({
       setError(formatAppError(err));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function addSong(e: React.FormEvent) {
+    e.preventDefault();
+    if (!songTitle.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const { data, error: dbErr } = await supabase
+        .from("mezmur_songs")
+        .insert({
+          title_am: songTitle.trim(),
+          occasion: songOcc.trim() || null,
+          is_approved: true,
+        })
+        .select("id, title_am, occasion, is_approved")
+        .single();
+      if (dbErr) {
+        setError(formatAppError(dbErr));
+        return;
+      }
+      if (data) setSongs((s) => [data as Song, ...s]);
+      setSongTitle("");
+      setSongOcc("");
+      setOk("ተፈቅደ መዝሙር ተመዝግቧል");
+    } catch (err) {
+      setError(formatAppError(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function addService(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const { data, error: dbErr } = await supabase
+        .from("mezmur_services")
+        .insert({
+          service_type: svcType,
+          service_date: svcDate || new Date().toISOString().slice(0, 10),
+          title_am: svcTitle.trim() || null,
+          location: svcLoc.trim() || null,
+          status: "planned",
+        })
+        .select("id, service_type, service_date, title_am, location, status")
+        .single();
+      if (dbErr) {
+        setError(formatAppError(dbErr));
+        return;
+      }
+      if (data) setServices((s) => [data as Service, ...s]);
+      setSvcTitle("");
+      setSvcLoc("");
+      setSvcDate("");
+      setOk("አገልግሎት ተመዝግቧል");
+    } catch (err) {
+      setError(formatAppError(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function markServiceDone(id: string) {
+    setError(null);
+    try {
+      const supabase = createClient();
+      const { error: dbErr } = await supabase
+        .from("mezmur_services")
+        .update({ status: "done" })
+        .eq("id", id);
+      if (dbErr) {
+        setError(formatAppError(dbErr));
+        return;
+      }
+      setServices((list) =>
+        list.map((s) => (s.id === id ? { ...s, status: "done" } : s))
+      );
+      setOk("አገልግሎት ተጠናቋል");
+    } catch (err) {
+      setError(formatAppError(err));
     }
   }
 
@@ -178,7 +299,7 @@ export function MezmurPanel({
           <input
             value={voice}
             onChange={(e) => setVoice(e.target.value)}
-            placeholder="ድምጽ (ተኖር…)"
+            placeholder="ድምጽ"
             className="w-32 rounded-xl border border-[var(--border)] px-3 py-2 text-sm amharic"
           />
           <button
@@ -236,6 +357,116 @@ export function MezmurPanel({
         >
           ልምምድ አስቀምጥ
         </button>
+      </section>
+
+      <section className="rounded-2xl border border-[var(--border)] p-4 space-y-3">
+        <h3 className="text-sm font-semibold amharic">
+          ተፈቅደ መዝሙሮች (አስጠኝ)
+        </h3>
+        <form onSubmit={addSong} className="flex flex-wrap gap-2">
+          <input
+            required
+            value={songTitle}
+            onChange={(e) => setSongTitle(e.target.value)}
+            placeholder="የመዝሙር ርዕስ"
+            className="flex-1 rounded-xl border border-[var(--border)] px-3 py-2 text-sm amharic"
+          />
+          <input
+            value={songOcc}
+            onChange={(e) => setSongOcc(e.target.value)}
+            placeholder="ወቅት / አጋጣሚ"
+            className="w-36 rounded-xl border border-[var(--border)] px-3 py-2 text-sm amharic"
+          />
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-xl bg-[var(--primary)] px-4 py-2 text-sm text-white"
+          >
+            አክል
+          </button>
+        </form>
+        <ul className="text-sm amharic space-y-1">
+          {songs.map((s) => (
+            <li key={s.id} className="border-b border-[var(--border)]/40 py-1">
+              {s.title_am}
+              {s.occasion ? (
+                <span className="text-[11px] text-[var(--foreground)]/45">
+                  {" "}
+                  · {s.occasion}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="rounded-2xl border border-[var(--border)] p-4 space-y-3">
+        <h3 className="text-sm font-semibold amharic">
+          አገልግሎት (መደበኛ / ሰርግ / ንግስ)
+        </h3>
+        <form onSubmit={addService} className="grid gap-2 sm:grid-cols-2">
+          <select
+            value={svcType}
+            onChange={(e) => setSvcType(e.target.value)}
+            className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm amharic"
+          >
+            <option value="regular">መደበኛ</option>
+            <option value="wedding">ሰርግ እጀባ</option>
+            <option value="ngus">ንግስ</option>
+            <option value="parish">ጉባኤ / አጥቢያ</option>
+            <option value="other">ሌላ</option>
+          </select>
+          <input
+            type="date"
+            value={svcDate}
+            onChange={(e) => setSvcDate(e.target.value)}
+            className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm"
+          />
+          <input
+            value={svcTitle}
+            onChange={(e) => setSvcTitle(e.target.value)}
+            placeholder="ርዕስ"
+            className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm amharic"
+          />
+          <input
+            value={svcLoc}
+            onChange={(e) => setSvcLoc(e.target.value)}
+            placeholder="ቦታ"
+            className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm amharic"
+          />
+          <button
+            type="submit"
+            disabled={saving}
+            className="sm:col-span-2 rounded-xl bg-[var(--primary)] py-2.5 text-sm text-white"
+          >
+            አገልግሎት መዝግብ
+          </button>
+        </form>
+        <ul className="space-y-2 text-sm amharic">
+          {services.map((s) => (
+            <li
+              key={s.id}
+              className="flex flex-wrap items-center gap-2 border-b border-[var(--border)]/40 py-2"
+            >
+              <span className="flex-1">
+                {SVC_AM[s.service_type] ?? s.service_type} · {s.service_date}
+                {s.title_am ? ` · ${s.title_am}` : ""}
+                {s.location ? ` · ${s.location}` : ""}
+              </span>
+              {s.status === "planned" ? (
+                <button
+                  type="button"
+                  onClick={() => markServiceDone(s.id)}
+                  className="rounded-lg bg-emerald-700 text-white text-xs px-2 py-1"
+                >
+                  ተከናውኗል
+                </button>
+              ) : (
+                <span className="text-xs text-emerald-700">ተጠናቋል</span>
+              )}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section>
