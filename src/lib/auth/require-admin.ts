@@ -1,6 +1,27 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile, UserRole } from "@/types/database";
+
+export type UserRole =
+  | "super_admin"
+  | "admin"
+  | "editor"
+  | "department_manager"
+  | "member"
+  | "visitor";
+
+export type Profile = {
+  id: string;
+  email: string | null;
+  full_name_am: string | null;
+  full_name_en: string | null;
+  role: UserRole;
+  department_id: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 const ADMIN_ROLES: UserRole[] = ["super_admin", "admin", "editor"];
 

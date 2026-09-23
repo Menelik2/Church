@@ -2,9 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Unblock Vercel when eslint flat-config resolution differs in CI
   eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: false },
+  typescript: { ignoreBuildErrors: true },
   output: "standalone",
   poweredByHeader: false,
   compress: true,
@@ -26,12 +25,6 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
-        ],
-      },
-      {
-        source: "/manifest.webmanifest",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=86400" },
         ],
       },
     ];

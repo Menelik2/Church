@@ -3,9 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { Article } from "@/types/database";
 
-export function ArticleEditForm({ article }: { article: Article }) {
+/** Local shape — avoids broken path resolution on Vercel CI */
+export type ArticleEditModel = {
+  id: string;
+  title_am: string;
+  title_en: string | null;
+  content_am: string;
+  published: boolean;
+};
+
+export function ArticleEditForm({ article }: { article: ArticleEditModel }) {
   const router = useRouter();
   const [titleAm, setTitleAm] = useState(article.title_am);
   const [titleEn, setTitleEn] = useState(article.title_en ?? "");
@@ -81,7 +89,11 @@ export function ArticleEditForm({ article }: { article: Article }) {
       </label>
 
       {message && (
-        <p className={`text-sm ${message.includes("ተቀምጧል") ? "text-emerald-600" : "text-red-600"}`}>
+        <p
+          className={`text-sm ${
+            message.includes("ተቀምጧል") ? "text-emerald-600" : "text-red-600"
+          }`}
+        >
           {message}
         </p>
       )}
