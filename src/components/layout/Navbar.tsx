@@ -9,7 +9,8 @@ const navLinks = [
   { href: "/rules", label: "ሕግና ደንብ" },
   { href: "/about", label: "ስለ እኛ" },
   { href: "/departments", label: "ክፍሎች" },
-  { href: "/programs", label: "መርሐግብራት" },
+  { href: "/announcements", label: "ማስታወቂያ" },
+  { href: "/events", label: "ዝግጅቶች" },
   { href: "/contact", label: "አግኙን" },
 ];
 
