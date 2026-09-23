@@ -14,6 +14,7 @@ import { MediaPanel } from "@/components/workspace/MediaPanel";
 import { MezmurPanel } from "@/components/workspace/MezmurPanel";
 import { RelationsPanel } from "@/components/workspace/RelationsPanel";
 import { CheckoutPanel } from "@/components/workspace/CheckoutPanel";
+import { ChairPanel } from "@/components/workspace/ChairPanel";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -131,6 +132,42 @@ type CheckoutRow = {
   checked_out_at: string;
   due_date: string | null;
   returned_at: string | null;
+  status: string;
+};
+
+type CorrRow = {
+  id: string;
+  direction: string;
+  subject_am: string;
+  from_party: string | null;
+  status: string;
+  routed_to_dept: string | null;
+  received_at: string | null;
+};
+
+type ApprovalRow = {
+  id: string;
+  approval_type: string;
+  title_am: string;
+  amount_birr: number | null;
+  status: string;
+};
+
+type DisciplineRow = {
+  id: string;
+  subject_name_am: string;
+  reason: string;
+  step: number;
+  status: string;
+  votes_for: number | null;
+  votes_against: number | null;
+  votes_total: number | null;
+};
+
+type PlanRow = {
+  id: string;
+  year: number;
+  title_am: string;
   status: string;
 };
 
@@ -372,8 +409,78 @@ export default async function DepartmentWorkspacePage({
         )
       : [];
 
+  const chairCorr =
+    slug === "sebabi"
+      ? await safeSelect<CorrRow>(supabase, "official_correspondence", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: CorrRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select(
+              "id, direction, subject_am, from_party, status, routed_to_dept, received_at"
+            )
+            .order("created_at", { ascending: false })
+            .limit(80)
+        )
+      : [];
+
+  const chairApprovals =
+    slug === "sebabi"
+      ? await safeSelect<ApprovalRow>(supabase, "chair_approvals", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: ApprovalRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select("id, approval_type, title_am, amount_birr, status")
+            .order("created_at", { ascending: false })
+            .limit(80)
+        )
+      : [];
+
+  const chairDiscipline =
+    slug === "sebabi"
+      ? await safeSelect<DisciplineRow>(supabase, "executive_discipline", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: DisciplineRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select(
+              "id, subject_name_am, reason, step, status, votes_for, votes_against, votes_total"
+            )
+            .order("created_at", { ascending: false })
+            .limit(50)
+        )
+      : [];
+
+  const chairPlans =
+    slug === "sebabi"
+      ? await safeSelect<PlanRow>(supabase, "annual_action_plans", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: PlanRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select("id, year, title_am, status")
+            .order("created_at", { ascending: false })
+            .limit(40)
+        )
+      : [];
+
   const tabs: { id: string; label: string }[] = [{ id: "overview", label: "አጠቃላይ" }];
   if (ws.modules.includes("tasks")) tabs.push({ id: "tasks", label: "ተግባራት" });
+  if (ws.modules.includes("approvals") && slug === "sebabi")
+    tabs.push({ id: "approvals", label: "ሰብሳቢ ሥራ" });
   if (ws.modules.includes("finance")) tabs.push({ id: "finance", label: "ሂሳብ" });
   if (ws.modules.includes("inventory")) {
     tabs.push({ id: "inventory", label: "ንብረት" });
@@ -382,7 +489,7 @@ export default async function DepartmentWorkspacePage({
   if (ws.modules.includes("classes")) tabs.push({ id: "classes", label: "ክፍሎች" });
   if (ws.modules.includes("attendance") && slug !== "mezmur")
     tabs.push({ id: "attendance", label: "መገኝት" });
-  if (ws.modules.includes("correspondence"))
+  if (ws.modules.includes("correspondence") && slug !== "sebabi")
     tabs.push({ id: "correspondence", label: "ደብዳቤ / መመዝገቢያ" });
   if (ws.modules.includes("media")) tabs.push({ id: "media", label: "ሚዲያ" });
   if (ws.modules.includes("charity")) tabs.push({ id: "charity", label: "በጎ አድራጎት" });
@@ -452,6 +559,14 @@ export default async function DepartmentWorkspacePage({
 
       {activeTab === "tasks" && (
         <TaskPanel departmentCode={slug} initial={tasks} />
+      )}
+      {activeTab === "approvals" && slug === "sebabi" && (
+        <ChairPanel
+          initialCorr={chairCorr}
+          initialApprovals={chairApprovals}
+          initialDiscipline={chairDiscipline}
+          initialPlans={chairPlans}
+        />
       )}
       {activeTab === "finance" && <FinancePanel initial={finance} />}
       {activeTab === "inventory" && <InventoryPanel initial={inventory} />}
