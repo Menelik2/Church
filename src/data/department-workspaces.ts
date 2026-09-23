@@ -167,10 +167,11 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_am: "ልማትና በጎ አድራጎት ክፍል",
     title_en: "Development & Charity",
     is_leadership: false,
-    description_am: "የልማት ፕሮጀክቶች፣ እርዳታና በጎ አድራጎት።",
+    description_am:
+      "የገቢ ማስገኛ፣ የልማት ፕሮጀክት፣ በጎ አድራጎት፣ ሙያ፣ ጽዳትና ግቢ ማስዋብ — ንዑስ ክፍሎችን በየወሩ መገምገምና ሩብ ዓመታዊ ሪፖርት።",
     modules: ["overview", "charity", "finance", "tasks", "reports"],
     actions: [
-      { label_am: "ፕሮጀክቶች", href: "/admin/workspace/limat?tab=charity", module: "charity" },
+      { label_am: "ፕሮጀክቶች / በጎ አድራጎት", href: "/admin/workspace/limat?tab=charity", module: "charity" },
       { label_am: "ተግባራት", href: "/admin/workspace/limat?tab=tasks", module: "tasks" },
       { label_am: "ሪፖርት", href: "/admin/operations/reports", module: "reports" },
     ],
