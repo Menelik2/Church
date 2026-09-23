@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, BookOpen, Building2, HandHeart, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 const tabs = [
   { href: "/", label: "መነሻ", icon: Home, match: (p: string) => p === "/" },
@@ -34,7 +35,11 @@ const tabs = [
       p.startsWith("/contact") ||
       p.startsWith("/announcements") ||
       p.startsWith("/events") ||
-      p.startsWith("/more"),
+      p.startsWith("/more") ||
+      p.startsWith("/vision") ||
+      p.startsWith("/mission") ||
+      p.startsWith("/objectives") ||
+      p.startsWith("/organization"),
   },
 ];
 
@@ -45,11 +50,11 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-50 lg:hidden border-t border-[var(--border)] bg-[var(--background)]/95 backdrop-blur-xl"
+      className="fixed bottom-0 inset-x-0 z-50 lg:hidden border-t border-[var(--border)] bg-[var(--background)]/92 backdrop-blur-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.06)]"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="ዋና አሰሳ"
     >
-      <ul className="grid grid-cols-5 h-16 max-w-lg mx-auto">
+      <ul className="mx-auto grid h-[4.25rem] max-w-lg grid-cols-5">
         {tabs.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;
@@ -58,20 +63,27 @@ export function MobileBottomNav() {
               <Link
                 href={tab.href}
                 className={cn(
-                  "flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition active:scale-95",
+                  "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition active:scale-95",
                   active
                     ? "text-[var(--primary)]"
-                    : "text-[var(--foreground)]/50"
+                    : "text-[var(--foreground)]/45"
                 )}
               >
+                {active && (
+                  <motion.span
+                    layoutId="tab-pill"
+                    className="absolute top-1.5 h-1 w-5 rounded-full bg-[var(--color-gold-500)]"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
                 <span
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-xl transition",
+                    "mt-1 flex h-8 w-8 items-center justify-center rounded-xl transition",
                     active && "bg-[var(--primary)]/10"
                   )}
                 >
                   <Icon
-                    className={cn("h-5 w-5", active && "stroke-[2.25]")}
+                    className={cn("h-5 w-5", active && "stroke-[2.35]")}
                     aria-hidden
                   />
                 </span>
