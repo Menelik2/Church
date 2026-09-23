@@ -6,6 +6,39 @@ import { createClient } from "@/lib/supabase/client";
 import { formatAppError, type AppError } from "@/lib/errors";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
+function errorFromParam(errorParam: string | null): AppError | null {
+  if (errorParam === "inactive") {
+    return {
+      messageAm: "መለያዎ አልተንቀሳቀሰም",
+      messageEn: "Account inactive",
+      hintAm: "አስተዳዳሪን ያነጋግሩ ወይም is_active = true ያድርጉ።",
+    };
+  }
+  if (errorParam === "auth") {
+    return {
+      messageAm: "ማረጋገጣ አልተሳካም",
+      messageEn: "Authentication failed",
+      hintAm: "እንደገና ይሞክሩ።",
+    };
+  }
+  if (errorParam === "noprofile") {
+    return {
+      messageAm: "የመለያ መገለጣ አልተገኘም",
+      messageEn: "No profile row",
+      hintAm:
+        "በSupabase Auth ላይ የጠነ ነገር በprofiles ሰንጠረዥ አይነለም። 007_profile_trigger.sql ያስሩ።",
+    };
+  }
+  if (errorParam === "forbidden") {
+    return {
+      messageAm: "የአስተዳዳሪ ፈቃድ የለዎት አይደለም",
+      messageEn: "Insufficient role",
+      hintAm: "profiles.role = admin / super_admin / editor / department_manager ያድርጉ።",
+    };
+  }
+  return null;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -15,23 +48,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<AppError | null>(() => {
-    if (errorParam === "inactive") {
-      return {
-        messageAm: "መለያዎ አልተንቀሳቀሰም",
-        messageEn: "Account inactive",
-        hintAm: "አስተዳዳሪን ያነጋግሩ ወይም is_active = true ያድርጉ።",
-      };
-    }
-    if (errorParam === "auth") {
-      return {
-        messageAm: "ማረጋገጫ አልተሳካም",
-        messageEn: "Authentication failed",
-        hintAm: "እንደገና ይሞክሩ።",
-      };
-    }
-    return null;
-  });
+  const [error, setError] = useState<AppError | null>(() => errorFromParam(errorParam));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,14 +70,13 @@ function LoginForm() {
       }
 
       const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
       if (authError) {
         const mapped = formatAppError(authError);
-        // Friendlier auth messages
         if (
           authError.message?.toLowerCase().includes("invalid login") ||
           authError.message?.toLowerCase().includes("invalid credentials")
@@ -78,7 +94,24 @@ function LoginForm() {
         return;
       }
 
-      router.push(next);
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, role, is_active")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        if (!profile) {
+          setError(errorFromParam("noprofile"));
+          return;
+        }
+        if (profile.is_active === false) {
+          setError(errorFromParam("inactive"));
+          return;
+        }
+      }
+
+      router.push(next.startsWith("/") ? next : "/admin");
       router.refresh();
     } catch (err) {
       setError(formatAppError(err));
@@ -142,7 +175,7 @@ export default function AdminLoginPage() {
             የአስተዳዳሪ መግቢያ
           </h1>
           <p className="mt-1 text-sm text-[var(--foreground)]/60">
-            ማኅተመ ክርስቶስ ሰንበት ት/ቤት
+            ደብረ ሰላም በዓለ እግዚአብሔር · ማእተመ ክርስቶስ
           </p>
         </div>
         <Suspense fallback={<p className="text-sm text-center">…</p>}>
