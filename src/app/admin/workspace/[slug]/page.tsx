@@ -8,6 +8,9 @@ import { TaskPanel } from "@/components/workspace/TaskPanel";
 import { FinancePanel } from "@/components/workspace/FinancePanel";
 import { InventoryPanel } from "@/components/workspace/InventoryPanel";
 import { RecordPanel } from "@/components/workspace/RecordPanel";
+import { ClassesPanel } from "@/components/workspace/ClassesPanel";
+import { CharityPanel } from "@/components/workspace/CharityPanel";
+import { MediaPanel } from "@/components/workspace/MediaPanel";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +47,42 @@ type RecordRow = {
   record_type: string;
   record_date: string | null;
   body: string | null;
+};
+
+type ClassRow = {
+  id: string;
+  title_am: string;
+  level_am: string | null;
+  schedule_note: string | null;
+  teacher_name: string | null;
+  is_active: boolean;
+};
+
+type ClassAttRow = {
+  id: string;
+  class_id: string;
+  attendance_date: string;
+  present_count: number;
+  notes: string | null;
+};
+
+type CharityRow = {
+  id: string;
+  title_am: string;
+  description: string | null;
+  status: string;
+  budget_birr: number | null;
+  beneficiaries: string | null;
+  start_date: string | null;
+};
+
+type MediaRow = {
+  id: string;
+  title_am: string;
+  media_type: string | null;
+  event_name: string | null;
+  storage_url: string | null;
+  notes: string | null;
 };
 
 export default async function DepartmentWorkspacePage({
@@ -128,6 +167,74 @@ export default async function DepartmentWorkspacePage({
       .limit(30)
   );
 
+  const educationClasses =
+    slug === "timihirt" || slug === "hitsanat"
+      ? await safeSelect<ClassRow>(supabase, "education_classes", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: ClassRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select(
+              "id, title_am, level_am, schedule_note, teacher_name, is_active"
+            )
+            .order("created_at", { ascending: false })
+            .limit(50)
+        )
+      : [];
+
+  const classAttendance =
+    slug === "timihirt" || slug === "hitsanat"
+      ? await safeSelect<ClassAttRow>(supabase, "class_attendance", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: ClassAttRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select("id, class_id, attendance_date, present_count, notes")
+            .order("attendance_date", { ascending: false })
+            .limit(50)
+        )
+      : [];
+
+  const charityProjects =
+    slug === "limat"
+      ? await safeSelect<CharityRow>(supabase, "charity_projects", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: CharityRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select(
+              "id, title_am, description, status, budget_birr, beneficiaries, start_date"
+            )
+            .order("created_at", { ascending: false })
+            .limit(50)
+        )
+      : [];
+
+  const mediaLogs =
+    slug === "media"
+      ? await safeSelect<MediaRow>(supabase, "media_logs", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: MediaRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select("id, title_am, media_type, event_name, storage_url, notes")
+            .order("created_at", { ascending: false })
+            .limit(50)
+        )
+      : [];
+
   const tabs: { id: string; label: string }[] = [{ id: "overview", label: "አጠቃላይ" }];
   if (ws.modules.includes("tasks")) tabs.push({ id: "tasks", label: "ተግባራት" });
   if (ws.modules.includes("finance")) tabs.push({ id: "finance", label: "ሂሳብ" });
@@ -209,11 +316,9 @@ export default async function DepartmentWorkspacePage({
       {activeTab === "finance" && <FinancePanel initial={finance} />}
       {activeTab === "inventory" && <InventoryPanel initial={inventory} />}
       {activeTab === "classes" && (
-        <RecordPanel
-          departmentCode={slug}
-          recordType="class"
-          title="የትምሕርት ክፍሎች"
-          initial={records.filter((r) => r.record_type === "class")}
+        <ClassesPanel
+          initialClasses={educationClasses}
+          initialAttendance={classAttendance}
         />
       )}
       {(activeTab === "attendance" || activeTab === "choir") && (
@@ -232,22 +337,8 @@ export default async function DepartmentWorkspacePage({
           initial={records.filter((r) => r.record_type === "correspondence")}
         />
       )}
-      {activeTab === "media" && (
-        <RecordPanel
-          departmentCode={slug}
-          recordType="media"
-          title="ሚዲያ መዝገብ"
-          initial={records.filter((r) => r.record_type === "media")}
-        />
-      )}
-      {activeTab === "charity" && (
-        <RecordPanel
-          departmentCode={slug}
-          recordType="event"
-          title="የበጎ አድራጎት ፕሮጀክቶች"
-          initial={records.filter((r) => r.record_type === "event")}
-        />
-      )}
+      {activeTab === "media" && <MediaPanel initial={mediaLogs} />}
+      {activeTab === "charity" && <CharityPanel initial={charityProjects} />}
     </div>
   );
 }
