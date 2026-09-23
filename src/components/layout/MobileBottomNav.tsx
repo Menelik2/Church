@@ -1,0 +1,86 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Home, BookOpen, Building2, HandHeart, MoreHorizontal } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const tabs = [
+  { href: "/", label: "መነሻ", icon: Home, match: (p: string) => p === "/" },
+  {
+    href: "/rules",
+    label: "ሕግ",
+    icon: BookOpen,
+    match: (p: string) => p.startsWith("/rules") || p.startsWith("/pdf"),
+  },
+  {
+    href: "/departments",
+    label: "ክፍሎች",
+    icon: Building2,
+    match: (p: string) => p.startsWith("/departments"),
+  },
+  {
+    href: "/services",
+    label: "አገልግሎት",
+    icon: HandHeart,
+    match: (p: string) => p.startsWith("/services"),
+  },
+  {
+    href: "/more",
+    label: "ተጨማሪ",
+    icon: MoreHorizontal,
+    match: (p: string) =>
+      p.startsWith("/about") ||
+      p.startsWith("/contact") ||
+      p.startsWith("/announcements") ||
+      p.startsWith("/events") ||
+      p.startsWith("/more"),
+  },
+];
+
+export function MobileBottomNav() {
+  const pathname = usePathname();
+
+  if (pathname.startsWith("/admin")) return null;
+
+  return (
+    <nav
+      className="fixed bottom-0 inset-x-0 z-50 lg:hidden border-t border-[var(--border)] bg-[var(--background)]/95 backdrop-blur-xl"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      aria-label="ዋና አሰሳ"
+    >
+      <ul className="grid grid-cols-5 h-16 max-w-lg mx-auto">
+        {tabs.map((tab) => {
+          const active = tab.match(pathname);
+          const Icon = tab.icon;
+          return (
+            <li key={tab.href} className="flex">
+              <Link
+                href={tab.href}
+                className={cn(
+                  "flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition active:scale-95",
+                  active
+                    ? "text-[var(--primary)]"
+                    : "text-[var(--foreground)]/50"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-xl transition",
+                    active && "bg-[var(--primary)]/10"
+                  )}
+                >
+                  <Icon
+                    className={cn("h-5 w-5", active && "stroke-[2.25]")}
+                    aria-hidden
+                  />
+                </span>
+                <span className="amharic leading-none">{tab.label}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
