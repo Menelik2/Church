@@ -16,6 +16,7 @@ import {
 import { DOCUMENT_META, DEPARTMENTS } from "@/data/regulations";
 import { EthiopianCross } from "@/components/orthodox/EthiopianCross";
 import { FadeIn } from "@/components/motion/FadeIn";
+import { RippleLink } from "@/components/ui/Ripple";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { churchFront, churchAerial, christIcon } from "@/data/church-photos";
@@ -158,12 +159,13 @@ export default function HomePage() {
                   whileTap={{ scale: 0.96 }}
                   whileHover={{ y: -4 }}
                 >
-                  <Link
+                  <RippleLink
                     href={a.href}
+                    color={a.tone === "primary" ? "primary" : "dark"}
                     className={
                       a.tone === "primary"
-                        ? "flex min-h-[3.75rem] items-center gap-3 rounded-2xl bg-white/95 px-3.5 py-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.28)] backdrop-blur-md border border-white/50 sm:px-4"
-                        : "flex min-h-[3.75rem] items-center gap-3 rounded-2xl bg-[var(--color-gold-500)] px-3.5 py-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.28)] border border-[var(--color-gold-300)] sm:px-4"
+                        ? "flex min-h-[3.75rem] items-center gap-3 rounded-2xl bg-white/95 px-3.5 py-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.28)] backdrop-blur-md border border-white/50 transition hover-lift sm:px-4"
+                        : "flex min-h-[3.75rem] items-center gap-3 rounded-2xl bg-[var(--color-gold-500)] px-3.5 py-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.28)] border border-[var(--color-gold-300)] transition hover-lift sm:px-4"
                     }
                   >
                     <span
@@ -189,7 +191,7 @@ export default function HomePage() {
                         {a.desc}
                       </span>
                     </span>
-                  </Link>
+                  </RippleLink>
                 </motion.div>
               );
             })}
@@ -281,12 +283,13 @@ export default function HomePage() {
           {quickGrid.map((item) => {
             const Icon = item.icon;
             return (
-              <Link
+              <RippleLink
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-3 px-3.5 py-3.5 transition active:bg-[var(--primary)]/5 hover:bg-[var(--muted)]/50 sm:px-4 sm:py-3.5"
+                color="primary"
+                className="hover-row hover-icon flex items-center gap-3 px-3.5 py-3.5 sm:px-4 sm:py-3.5"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+                <span className="hover-icon-bubble flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)] transition-transform duration-200">
                   <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -297,8 +300,8 @@ export default function HomePage() {
                     {item.desc}
                   </span>
                 </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--foreground)]/30" />
-              </Link>
+                <ChevronRight className="hover-chevron h-4 w-4 shrink-0 text-[var(--foreground)]/30 transition-transform duration-200" />
+              </RippleLink>
             );
           })}
         </nav>
@@ -331,9 +334,10 @@ export default function HomePage() {
               transition={{ delay: i * 0.05, type: "spring", stiffness: 140, damping: 18 }}
               className="w-[72%] shrink-0 snap-start sm:w-auto"
             >
-              <Link
+              <RippleLink
                 href={`/departments/${d.slug}`}
-                className="block h-full rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition active:scale-[0.98] hover:border-[var(--color-gold-400)] hover:shadow-md"
+                color="gold"
+                className="hover-card block h-full rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm"
               >
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-gold-100)] text-[var(--color-gold-600)] text-sm">
                   ✦
@@ -346,7 +350,7 @@ export default function HomePage() {
                     {d.title_en}
                   </p>
                 )}
-              </Link>
+              </RippleLink>
             </motion.div>
           ))}
         </div>
@@ -381,18 +385,20 @@ export default function HomePage() {
               የአባልነት ማመልከቻ፣ የሰርግ አጃቢ ጥያቄ እና ሌሎች አገልግሎቶች
             </p>
             <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:justify-center sm:gap-3">
-              <Link
+              <RippleLink
                 href="/services/membership"
-                className="rounded-2xl bg-[var(--color-gold-500)] px-6 py-3.5 text-sm font-bold text-[var(--color-charcoal)] shadow-lg transition active:scale-[0.98] hover:bg-[var(--color-gold-400)]"
+                color="dark"
+                className="inline-flex items-center justify-center rounded-2xl bg-[var(--color-gold-500)] px-6 py-3.5 text-sm font-bold text-[var(--color-charcoal)] shadow-lg transition hover:bg-[var(--color-gold-400)] hover-lift"
               >
                 የአባልነት ማመልከቻ
-              </Link>
-              <Link
+              </RippleLink>
+              <RippleLink
                 href="/services/wedding"
-                className="rounded-2xl border border-white/35 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition active:bg-white/15 hover:bg-white/15"
+                color="light"
+                className="inline-flex items-center justify-center rounded-2xl border border-white/35 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 hover-lift"
               >
                 የሰርግ አጃቢ ጥያቄ
-              </Link>
+              </RippleLink>
             </div>
           </div>
         </motion.div>
