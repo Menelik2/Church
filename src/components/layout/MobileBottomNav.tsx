@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, BookOpen, Building2, HandHeart, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { RippleLink } from "@/components/ui/Ripple";
 
 const tabs = [
   { href: "/", label: "መነሻ", icon: Home, match: (p: string) => p === "/" },
@@ -60,10 +60,11 @@ export function MobileBottomNav() {
           const Icon = tab.icon;
           return (
             <li key={tab.href} className="flex">
-              <Link
+              <RippleLink
                 href={tab.href}
+                color="primary"
                 className={cn(
-                  "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition active:scale-95",
+                  "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium",
                   active
                     ? "text-[var(--primary)]"
                     : "text-[var(--foreground)]/45"
@@ -88,7 +89,7 @@ export function MobileBottomNav() {
                   />
                 </span>
                 <span className="amharic leading-none">{tab.label}</span>
-              </Link>
+              </RippleLink>
             </li>
           );
         })}

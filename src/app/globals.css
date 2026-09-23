@@ -134,3 +134,60 @@ body {
     padding-right: env(safe-area-inset-right);
   }
 }
+
+/* ── Touch-friendly ripple ───────────────────────────────── */
+.ripple-host {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@keyframes ripple-expand {
+  0% {
+    transform: scale(0);
+    opacity: 0.55;
+  }
+  70% {
+    opacity: 0.22;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.ripple-wave {
+  animation: ripple-expand 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ripple-wave {
+    animation-duration: 0.01ms !important;
+    opacity: 0 !important;
+  }
+  .ripple-host {
+    transition: none !important;
+  }
+}
+
+/* Desktop hover affordances (no sticky hover on touch) */
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+  .hover-row:hover {
+    background-color: color-mix(in srgb, var(--muted) 70%, transparent);
+  }
+  .hover-row:hover .hover-chevron {
+    transform: translateX(3px);
+    color: var(--primary);
+  }
+  .hover-icon:hover .hover-icon-bubble {
+    background-color: color-mix(in srgb, var(--primary) 18%, transparent);
+    transform: scale(1.06);
+  }
+  .hover-card:hover {
+    border-color: var(--color-gold-400);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+}
