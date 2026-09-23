@@ -23,8 +23,8 @@ export type Profile = {
   updated_at: string;
 };
 
-const ADMIN_ROLES: UserRole[] = ["super_admin", "admin", "editor"];
-const STAFF_ROLES: UserRole[] = [
+export const ADMIN_ROLES: UserRole[] = ["super_admin", "admin", "editor"];
+export const STAFF_ROLES: UserRole[] = [
   "super_admin",
   "admin",
   "editor",
