@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { requireStaff } from "@/lib/auth/require-admin";
 import { getWorkspace } from "@/data/department-workspaces";
 import { createClient } from "@/lib/supabase/server";
 import { safeSelect } from "@/lib/supabase/safe-count";
@@ -53,7 +53,7 @@ export default async function DepartmentWorkspacePage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ tab?: string }>;
 }) {
-  await requireAdmin();
+  await requireStaff();
   const { slug } = await params;
   const { tab } = await searchParams;
   const ws = getWorkspace(slug);
@@ -130,10 +130,11 @@ export default async function DepartmentWorkspacePage({
 
   const tabs: { id: string; label: string }[] = [{ id: "overview", label: "አጠቃላይ" }];
   if (ws.modules.includes("tasks")) tabs.push({ id: "tasks", label: "ተግባራት" });
-  if (ws.modules.includes("finance")) tabs.push({ id: "finance", label: "ሒሳብ" });
+  if (ws.modules.includes("finance")) tabs.push({ id: "finance", label: "ሂሳብ" });
   if (ws.modules.includes("inventory")) tabs.push({ id: "inventory", label: "ንብረት" });
-  if (ws.modules.includes("classes") || ws.modules.includes("attendance"))
-    tabs.push({ id: "attendance", label: "መገኘት" });
+  if (ws.modules.includes("classes")) tabs.push({ id: "classes", label: "ክፍሎች" });
+  if (ws.modules.includes("attendance"))
+    tabs.push({ id: "attendance", label: "መገኝት" });
   if (ws.modules.includes("correspondence"))
     tabs.push({ id: "correspondence", label: "ደብዳቤ" });
   if (ws.modules.includes("media")) tabs.push({ id: "media", label: "ሚዲያ" });
@@ -207,11 +208,19 @@ export default async function DepartmentWorkspacePage({
       )}
       {activeTab === "finance" && <FinancePanel initial={finance} />}
       {activeTab === "inventory" && <InventoryPanel initial={inventory} />}
+      {activeTab === "classes" && (
+        <RecordPanel
+          departmentCode={slug}
+          recordType="class"
+          title="የትምሕርት ክፍሎች"
+          initial={records.filter((r) => r.record_type === "class")}
+        />
+      )}
       {(activeTab === "attendance" || activeTab === "choir") && (
         <RecordPanel
           departmentCode={slug}
           recordType="attendance"
-          title={activeTab === "choir" ? "የመዝሙር ልምምድ መዝገብ" : "የመገኘት መዝገብ"}
+          title={activeTab === "choir" ? "የመዝሙር ልምምድ መዝገብ" : "የመገኝት መዝገብ"}
           initial={records.filter((r) => r.record_type === "attendance")}
         />
       )}
