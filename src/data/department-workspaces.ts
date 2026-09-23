@@ -38,12 +38,13 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_en: "Chairperson",
     is_leadership: true,
     description_am:
-      "አጠቃላይ አስተባባሪ — ስብሰባ፣ ፈቃድ፣ የክፍል ሪፖርቶችና የስራ አስፈጻሚ ኮሚቴ አስተዳደር።",
-    modules: ["overview", "approvals", "meetings", "reports", "tasks"],
+      "ተጠሪነት ለሥራ አስፈጻሚ ኮሚቴ — ኮሚቴ መሪነት፣ ደብዳቤ፣ ፈቃድ/ፊርማ፣ የሥራ አስፈጻሚ ክትትል (7.1–7.6)፣ ዓመታዊ መርሃ ግብር፣ በስሩ፡ ቁጥጥር፣ ሒሳብ፣ ንብረት፣ ሚዲያ።",
+    modules: ["overview", "approvals", "correspondence", "meetings", "reports", "tasks"],
     actions: [
+      { label_am: "ፈቃድ / ደብዳቤ / ክትትል", href: "/admin/workspace/sebabi?tab=approvals", module: "approvals" },
+      { label_am: "ስብሰባዎች", href: "/admin/operations/meetings", module: "meetings" },
       { label_am: "የአባልነት ፈቃዶች", href: "/admin/operations/membership", module: "approvals" },
       { label_am: "የአባል ጉዞ", href: "/admin/operations/journey", module: "approvals" },
-      { label_am: "ስብሰባዎች", href: "/admin/operations/meetings", module: "meetings" },
       { label_am: "የክፍል ሪፖርቶች", href: "/admin/operations/reports", module: "reports" },
       { label_am: "ተግባራት", href: "/admin/workspace/sebabi?tab=tasks", module: "tasks" },
     ],
@@ -117,7 +118,7 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_am: "ሒሳብ ክፍል",
     title_en: "Finance",
     is_leadership: false,
-    description_am: "ገቢ፣ ወጪ፣ የወርሃዊ መዋጮና የሒሳብ ሪፖርት።",
+    description_am: "ገቢ፣ ወጪ፣ የወርሃዊ መዋጮና የሒሳብ ሪፖርት — ተጠሪነት ለሰብሳቢ።",
     modules: ["overview", "finance", "tasks", "reports"],
     actions: [
       { label_am: "ሒሳብ መዝገብ", href: "/admin/workspace/hisab?tab=finance", module: "finance" },
@@ -158,7 +159,7 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_am: "ቁጥጥርና ክርስትያናዊ ህይወት ክትትል",
     title_en: "Oversight & Christian Life",
     is_leadership: false,
-    description_am: "የክርስቲያናዊ ሕይወት ክትትል፣ ዲስፕሊንና ማረሚያ።",
+    description_am: "የክርስቲያናዊ ሕይወት ክትትል፣ ዲስፕሊንና ማረሚያ — ተጠሪነት ለሰብሳቢ።",
     modules: ["overview", "discipline", "tasks", "reports"],
     actions: [
       { label_am: "ዲስፕሊን", href: "/admin/operations/discipline", module: "discipline" },
@@ -185,7 +186,7 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_am: "ሚዲያ እና ዶክመንቴሽን ክፍል",
     title_en: "Media & Documentation",
     is_leadership: false,
-    description_am: "ፎቶ፣ ቪዲዮ፣ ዶክመንት መመዝገብና ማህደር።",
+    description_am: "ፎቶ፣ ቪዲዮ፣ ዶክመንት መመዝገብና ማህደር — ተጠሪነት ለሰብሳቢ።",
     modules: ["overview", "media", "tasks", "reports"],
     actions: [
       { label_am: "ሚዲያ መመዝገብ", href: "/admin/workspace/media?tab=media", module: "media" },
