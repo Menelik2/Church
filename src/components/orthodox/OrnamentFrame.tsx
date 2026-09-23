@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-/** Gold-burgundy decorative frame (ስዕል frame) */
+/** Gold-burgundy decorative frame */
 export function OrnamentFrame({
   children,
   className,

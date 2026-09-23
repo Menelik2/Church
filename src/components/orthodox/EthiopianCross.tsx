@@ -10,7 +10,7 @@ type Props = {
   gold?: boolean;
 };
 
-/** Ethiopian Orthodox cross (ጠልሰም) motif */
+/** Ethiopian Orthodox cross motif */
 export function EthiopianCross({
   className,
   size = 48,
