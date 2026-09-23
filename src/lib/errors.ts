@@ -53,7 +53,7 @@ export function formatAppError(err: unknown): AppError {
   if (
     code === "42P01" ||
     lower.includes("does not exist") ||
-    lower.includes("relation") && lower.includes("exist")
+    (lower.includes("relation") && lower.includes("exist"))
   ) {
     return {
       messageAm: "የውሂብ ሰንጠረዥ አልተገኘም",
@@ -61,7 +61,7 @@ export function formatAppError(err: unknown): AppError {
       code,
       detail: raw,
       hintAm:
-        "በSupabase SQL Editor ላይ migrations (001–007) ያሂዱ።",
+        "በSupabase SQL Editor ላይ migrations 001–010 ያሂዱ (journey, mezmur, ውሰት inclusive)።",
     };
   }
 
@@ -119,6 +119,17 @@ export function formatAppError(err: unknown): AppError {
     };
   }
 
+  // Check constraint
+  if (code === "23514" || lower.includes("check constraint")) {
+    return {
+      messageAm: "የተሳሳተ እሴት (constraint)",
+      messageEn: "Invalid value",
+      code,
+      detail: raw,
+      hintAm: "journey_stage / status እሴቶችን ያረጋግጡ።",
+    };
+  }
+
   // Network
   if (
     lower.includes("failed to fetch") ||
@@ -136,7 +147,7 @@ export function formatAppError(err: unknown): AppError {
 
   // Missing env / invalid supabase URL
   if (
-    lower.includes("supabase") && lower.includes("undefined") ||
+    (lower.includes("supabase") && lower.includes("undefined")) ||
     lower.includes("invalid url")
   ) {
     return {

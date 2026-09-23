@@ -24,12 +24,13 @@ type Checkout = {
 };
 
 export function CheckoutPanel({
-  items,
+  items: initialItems,
   initial,
 }: {
   items: Item[];
   initial: Checkout[];
 }) {
+  const [stock, setStock] = useState(initialItems);
   const [rows, setRows] = useState(initial);
   const [itemId, setItemId] = useState("");
   const [borrower, setBorrower] = useState("");
@@ -41,11 +42,23 @@ export function CheckoutPanel({
   const [ok, setOk] = useState<string | null>(null);
 
   const itemName = (id: string) =>
-    items.find((i) => i.id === id)?.name_am ?? "—";
+    stock.find((i) => i.id === id)?.name_am ?? "—";
+
+  const available = (id: string) =>
+    stock.find((i) => i.id === id)?.quantity ?? 0;
 
   async function checkout(e: React.FormEvent) {
     e.preventDefault();
     if (!itemId || !borrower.trim()) return;
+    const n = Math.max(1, Number(qty) || 1);
+    const have = available(itemId);
+    if (n > have) {
+      setError({
+        messageAm: `በቂ ንብረት የለም (ያለው: ${have})`,
+        messageEn: `Insufficient stock (available: ${have})`,
+      });
+      return;
+    }
     setSaving(true);
     setError(null);
     setOk(null);
@@ -56,7 +69,7 @@ export function CheckoutPanel({
         .insert({
           item_id: itemId,
           borrower_name: borrower.trim(),
-          quantity: Number(qty) || 1,
+          quantity: n,
           purpose: purpose.trim() || null,
           due_date: due || null,
           status: "out",
@@ -69,6 +82,20 @@ export function CheckoutPanel({
         setError(formatAppError(dbErr));
         return;
       }
+
+      const nextQty = have - n;
+      const { error: stockErr } = await supabase
+        .from("property_items")
+        .update({ quantity: nextQty })
+        .eq("id", itemId);
+      if (stockErr) {
+        setError(formatAppError(stockErr));
+        return;
+      }
+
+      setStock((list) =>
+        list.map((i) => (i.id === itemId ? { ...i, quantity: nextQty } : i))
+      );
       if (data) setRows((r) => [data as Checkout, ...r]);
       setBorrower("");
       setPurpose("");
@@ -84,6 +111,9 @@ export function CheckoutPanel({
 
   async function markReturned(id: string) {
     setError(null);
+    setOk(null);
+    const row = rows.find((r) => r.id === id);
+    if (!row || row.status !== "out") return;
     try {
       const supabase = createClient();
       const now = new Date().toISOString();
@@ -95,6 +125,23 @@ export function CheckoutPanel({
         setError(formatAppError(dbErr));
         return;
       }
+
+      const current = available(row.item_id);
+      const nextQty = current + row.quantity;
+      const { error: stockErr } = await supabase
+        .from("property_items")
+        .update({ quantity: nextQty })
+        .eq("id", row.item_id);
+      if (stockErr) {
+        setError(formatAppError(stockErr));
+        return;
+      }
+
+      setStock((list) =>
+        list.map((i) =>
+          i.id === row.item_id ? { ...i, quantity: nextQty } : i
+        )
+      );
       setRows((list) =>
         list.map((r) =>
           r.id === id
@@ -126,8 +173,8 @@ export function CheckoutPanel({
             className="rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm amharic"
           >
             <option value="">ንብረት ምረጥ</option>
-            {items.map((i) => (
-              <option key={i.id} value={i.id}>
+            {stock.map((i) => (
+              <option key={i.id} value={i.id} disabled={i.quantity <= 0}>
                 {i.name_am} ({i.quantity})
               </option>
             ))}
@@ -142,6 +189,7 @@ export function CheckoutPanel({
           <input
             type="number"
             min={1}
+            max={itemId ? available(itemId) : undefined}
             value={qty}
             onChange={(e) => setQty(e.target.value)}
             className="rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm"
@@ -160,7 +208,7 @@ export function CheckoutPanel({
           />
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || (itemId ? available(itemId) <= 0 : false)}
             className="sm:col-span-2 rounded-xl bg-[var(--primary)] py-2.5 text-sm font-medium text-white disabled:opacity-50"
           >
             ውሰት መዝግብ

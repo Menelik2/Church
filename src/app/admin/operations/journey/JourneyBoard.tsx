@@ -46,6 +46,7 @@ export function JourneyBoard({
     if (!vName.trim()) return;
     setSaving(true);
     setError(null);
+    setOk(null);
     try {
       const supabase = createClient();
       const { data, error: dbErr } = await supabase
@@ -83,6 +84,7 @@ export function JourneyBoard({
   async function convertVisitor(v: Visitor) {
     setSaving(true);
     setError(null);
+    setOk(null);
     try {
       const supabase = createClient();
       const now = new Date().toISOString();
@@ -99,7 +101,7 @@ export function JourneyBoard({
         .select("id, full_name_am, phone, journey_stage, status")
         .single();
       if (sErr || !servant) {
-        setError(formatAppError(sErr));
+        setError(formatAppError(sErr ?? "Failed to create servant"));
         return;
       }
       await supabase
@@ -112,6 +114,12 @@ export function JourneyBoard({
         from_stage: "visitor",
         to_stage: "registered",
         note: `from visitor ${v.id}`,
+      });
+      await supabase.from("new_member_register").insert({
+        full_name_am: v.full_name_am,
+        phone: v.phone,
+        servant_id: servant.id,
+        status: "registered",
       });
       setVisitors((list) => list.filter((x) => x.id !== v.id));
       setServants((list) => [servant as Servant, ...list]);
@@ -128,11 +136,16 @@ export function JourneyBoard({
     if (!next) return;
     setSaving(true);
     setError(null);
+    setOk(null);
     try {
       const supabase = createClient();
+      const patch: Record<string, unknown> = { journey_stage: next };
+      if (next === "servant") {
+        patch.completed_course = true;
+      }
       const { error: dbErr } = await supabase
         .from("servants")
-        .update({ journey_stage: next })
+        .update(patch)
         .eq("id", s.id);
       if (dbErr) {
         setError(formatAppError(dbErr));
@@ -141,7 +154,7 @@ export function JourneyBoard({
       await supabase.from("journey_events").insert({
         subject_type: "servant",
         subject_id: s.id,
-        from_stage: s.journey_stage,
+        from_stage: s.journey_stage || "registered",
         to_stage: next,
       });
       if (next === "course") {
@@ -151,12 +164,22 @@ export function JourneyBoard({
           course_name: "ተከታታይ ትምህርት",
           status: "enrolled",
         });
+        await supabase
+          .from("new_member_register")
+          .update({ status: "in_course" })
+          .eq("servant_id", s.id);
       }
       if (next === "servant") {
+        const today = new Date().toISOString().slice(0, 10);
         await supabase
-          .from("servants")
-          .update({ completed_course: true })
-          .eq("id", s.id);
+          .from("course_enrollments")
+          .update({ status: "completed", completed_at: today })
+          .eq("servant_id", s.id)
+          .eq("status", "enrolled");
+        await supabase
+          .from("new_member_register")
+          .update({ status: "graduated" })
+          .eq("servant_id", s.id);
       }
       setServants((list) =>
         list.map((x) =>

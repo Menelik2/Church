@@ -42,6 +42,7 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     modules: ["overview", "approvals", "meetings", "reports", "tasks"],
     actions: [
       { label_am: "የአባልነት ፈቃዶች", href: "/admin/operations/membership", module: "approvals" },
+      { label_am: "የአባል ጉዞ", href: "/admin/operations/journey", module: "approvals" },
       { label_am: "ስብሰባዎች", href: "/admin/operations/meetings", module: "meetings" },
       { label_am: "የክፍል ሪፖርቶች", href: "/admin/operations/reports", module: "reports" },
       { label_am: "ተግባራት", href: "/admin/workspace/sebabi?tab=tasks", module: "tasks" },
@@ -96,7 +97,6 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     modules: ["overview", "choir", "attendance", "tasks", "reports"],
     actions: [
       { label_am: "ልምምድ / መዝገብ", href: "/admin/workspace/mezmur?tab=choir", module: "choir" },
-      { label_am: "መገኘት", href: "/admin/workspace/mezmur?tab=attendance", module: "attendance" },
       { label_am: "ተግባራት", href: "/admin/workspace/mezmur?tab=tasks", module: "tasks" },
     ],
   },
@@ -148,8 +148,8 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
       "አዲስ አባላት፣ ኮርስ ክትትል፣ ሀዘንና ድስታ፣ ጽዋ፣ ውጭ/ውስጥ ግንኙነት፣ የወንድሞችና እህቶች ጉባኤ — ተጠሪነት ለም/ሰብሳቢ።",
     modules: ["overview", "correspondence", "tasks", "reports"],
     actions: [
-      { label_am: "ደብዳቤ / ግንኙነት", href: "/admin/workspace/genegnet?tab=correspondence", module: "correspondence" },
-      { label_am: "መልእክቶች", href: "/admin/messages", module: "correspondence" },
+      { label_am: "መመዝገቢያ / ኮርስ", href: "/admin/workspace/genegnet?tab=correspondence", module: "correspondence" },
+      { label_am: "የአባል ጉዞ", href: "/admin/operations/journey", module: "correspondence" },
       { label_am: "ተግባራት", href: "/admin/workspace/genegnet?tab=tasks", module: "tasks" },
     ],
   },
@@ -203,6 +203,7 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     modules: ["overview", "inventory", "tasks", "reports"],
     actions: [
       { label_am: "ንብረት መዝገብ", href: "/admin/workspace/nebrat?tab=inventory", module: "inventory" },
+      { label_am: "ውሰት / መመለስ", href: "/admin/workspace/nebrat?tab=checkout", module: "inventory" },
       { label_am: "ተግባራት", href: "/admin/workspace/nebrat?tab=tasks", module: "tasks" },
       { label_am: "ሪፖርት", href: "/admin/operations/reports", module: "reports" },
     ],
