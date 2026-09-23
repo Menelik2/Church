@@ -3,11 +3,14 @@ import { redirect } from "next/navigation";
 import { getSessionProfile } from "@/lib/auth/require-admin";
 import { AdminNav } from "./AdminNav";
 import { AdminSignOut } from "./AdminSignOut";
+import { AdminMobileNav } from "./AdminMobileNav";
 
 export const metadata = {
   title: "አስተዳደር · ማኅተመ ክርስቶስ",
   robots: { index: false, follow: false },
 };
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({
   children,
@@ -24,6 +27,7 @@ export default async function AdminLayout({
 async function AdminShell({ children }: { children: React.ReactNode }) {
   const session = await getSessionProfile();
 
+  // Login page (no session yet)
   if (!session?.profile) {
     return <>{children}</>;
   }
@@ -37,7 +41,7 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden md:flex w-60 flex-col border-r border-[var(--border)] bg-[var(--card)]">
+      <aside className="hidden md:flex w-60 flex-col border-r border-[var(--border)] bg-[var(--card)] sticky top-0 h-screen">
         <div className="p-5 border-b border-[var(--border)]">
           <Link href="/admin" className="font-bold text-[var(--primary)] amharic">
             አስተዳደር
@@ -57,15 +61,18 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">
-        <div className="md:hidden border-b border-[var(--border)] p-3 flex items-center justify-between bg-[var(--card)]">
+
+      <main className="flex-1 overflow-auto pb-20 md:pb-0">
+        <div className="md:hidden border-b border-[var(--border)] px-3 py-2.5 flex items-center justify-between bg-[var(--card)] sticky top-0 z-30">
           <Link href="/admin" className="font-bold text-[var(--primary)] amharic text-sm">
             አስተዳደር
           </Link>
           <AdminSignOut />
         </div>
-        <div className="p-4 sm:p-6 lg:p-8 max-w-6xl">{children}</div>
+        <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">{children}</div>
       </main>
+
+      <AdminMobileNav />
     </div>
   );
 }

@@ -1,20 +1,50 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireAdmin } from "../../../../lib/auth/require-admin";
-import {
-  getWorkspace,
-  DEPARTMENT_WORKSPACES,
-} from "../../../../data/department-workspaces";
-import { createClient } from "../../../../lib/supabase/server";
-import { TaskPanel } from "../../../../components/workspace/TaskPanel";
-import { FinancePanel } from "../../../../components/workspace/FinancePanel";
-import { InventoryPanel } from "../../../../components/workspace/InventoryPanel";
-import { RecordPanel } from "../../../../components/workspace/RecordPanel";
+import { requireAdmin } from "@/lib/auth/require-admin";
+import { getWorkspace } from "@/data/department-workspaces";
+import { createClient } from "@/lib/supabase/server";
+import { safeSelect } from "@/lib/supabase/safe-count";
+import { TaskPanel } from "@/components/workspace/TaskPanel";
+import { FinancePanel } from "@/components/workspace/FinancePanel";
+import { InventoryPanel } from "@/components/workspace/InventoryPanel";
+import { RecordPanel } from "@/components/workspace/RecordPanel";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
-export function generateStaticParams() {
-  return DEPARTMENT_WORKSPACES.map((d) => ({ slug: d.code }));
-}
+export const dynamic = "force-dynamic";
+
+type TaskRow = {
+  id: string;
+  title_am: string;
+  status: string;
+  priority: string;
+  due_date: string | null;
+};
+
+type FinanceRow = {
+  id: string;
+  entry_type: string;
+  category: string | null;
+  amount_birr: number;
+  description_am: string | null;
+  entry_date: string | null;
+};
+
+type InventoryRow = {
+  id: string;
+  name_am: string;
+  category: string | null;
+  quantity: number;
+  condition: string | null;
+  location: string | null;
+};
+
+type RecordRow = {
+  id: string;
+  title_am: string;
+  record_type: string;
+  record_date: string | null;
+  body: string | null;
+};
 
 export default async function DepartmentWorkspacePage({
   params,
@@ -32,62 +62,86 @@ export default async function DepartmentWorkspacePage({
   const activeTab = tab || "overview";
   const supabase = await createClient();
 
-  const { data: tasks } = await supabase
-    .from("department_tasks")
-    .select("id, title_am, status, priority, due_date")
-    .eq("department_code", slug)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const tasks = await safeSelect<TaskRow>(supabase, "department_tasks", (q) =>
+    (q as {
+      select: (s: string) => {
+        eq: (c: string, v: string) => {
+          order: (c: string, o: { ascending: boolean }) => {
+            limit: (n: number) => PromiseLike<{ data: TaskRow[] | null; error: unknown }>;
+          };
+        };
+      };
+    })
+      .select("id, title_am, status, priority, due_date")
+      .eq("department_code", slug)
+      .order("created_at", { ascending: false })
+      .limit(50)
+  );
 
-  const { data: finance } =
+  const finance =
     slug === "hisab" || slug === "limat"
-      ? await supabase
-          .from("finance_entries")
-          .select(
-            "id, entry_type, category, amount_birr, description_am, entry_date"
-          )
-          .order("created_at", { ascending: false })
-          .limit(50)
-      : { data: [] };
+      ? await safeSelect<FinanceRow>(supabase, "finance_entries", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: FinanceRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select(
+              "id, entry_type, category, amount_birr, description_am, entry_date"
+            )
+            .order("created_at", { ascending: false })
+            .limit(50)
+        )
+      : [];
 
-  const { data: inventory } =
+  const inventory =
     slug === "nebrat"
-      ? await supabase
-          .from("property_items")
-          .select("id, name_am, category, quantity, condition, location")
-          .order("created_at", { ascending: false })
-          .limit(100)
-      : { data: [] };
+      ? await safeSelect<InventoryRow>(supabase, "property_items", (q) =>
+          (q as {
+            select: (s: string) => {
+              order: (c: string, o: { ascending: boolean }) => {
+                limit: (n: number) => PromiseLike<{ data: InventoryRow[] | null; error: unknown }>;
+              };
+            };
+          })
+            .select("id, name_am, category, quantity, condition, location")
+            .order("created_at", { ascending: false })
+            .limit(100)
+        )
+      : [];
 
-  const { data: records } = await supabase
-    .from("department_records")
-    .select("id, title_am, record_type, record_date, body")
-    .eq("department_code", slug)
-    .order("created_at", { ascending: false })
-    .limit(30);
+  const records = await safeSelect<RecordRow>(supabase, "department_records", (q) =>
+    (q as {
+      select: (s: string) => {
+        eq: (c: string, v: string) => {
+          order: (c: string, o: { ascending: boolean }) => {
+            limit: (n: number) => PromiseLike<{ data: RecordRow[] | null; error: unknown }>;
+          };
+        };
+      };
+    })
+      .select("id, title_am, record_type, record_date, body")
+      .eq("department_code", slug)
+      .order("created_at", { ascending: false })
+      .limit(30)
+  );
 
-  const tabs: { id: string; label: string }[] = [
-    { id: "overview", label: "አጠቃላይ" },
-  ];
+  const tabs: { id: string; label: string }[] = [{ id: "overview", label: "አጠቃላይ" }];
   if (ws.modules.includes("tasks")) tabs.push({ id: "tasks", label: "ተግባራት" });
-  if (ws.modules.includes("finance"))
-    tabs.push({ id: "finance", label: "ሒሳብ" });
-  if (ws.modules.includes("inventory"))
-    tabs.push({ id: "inventory", label: "ንብረት" });
-  if (
-    ws.modules.includes("classes") ||
-    ws.modules.includes("attendance")
-  )
+  if (ws.modules.includes("finance")) tabs.push({ id: "finance", label: "ሒሳብ" });
+  if (ws.modules.includes("inventory")) tabs.push({ id: "inventory", label: "ንብረት" });
+  if (ws.modules.includes("classes") || ws.modules.includes("attendance"))
     tabs.push({ id: "attendance", label: "መገኘት" });
   if (ws.modules.includes("correspondence"))
     tabs.push({ id: "correspondence", label: "ደብዳቤ" });
   if (ws.modules.includes("media")) tabs.push({ id: "media", label: "ሚዲያ" });
-  if (ws.modules.includes("charity"))
-    tabs.push({ id: "charity", label: "በጎ አድራጎት" });
+  if (ws.modules.includes("charity")) tabs.push({ id: "charity", label: "በጎ አድራጎት" });
   if (ws.modules.includes("choir")) tabs.push({ id: "choir", label: "መዝሙር" });
 
   return (
-    <div className="pb-12">
+    <div className="pb-16">
       <Link
         href="/admin/workspace"
         className="inline-flex items-center gap-1 text-sm text-[var(--primary)] amharic mb-4"
@@ -107,7 +161,7 @@ export default async function DepartmentWorkspacePage({
         </p>
       </div>
 
-      <div className="flex gap-1 overflow-x-auto pb-2 mb-5 scrollbar-none">
+      <div className="flex gap-1 overflow-x-auto pb-2 mb-5 -mx-1 px-1 scrollbar-none">
         {tabs.map((t) => (
           <Link
             key={t.id}
@@ -143,28 +197,22 @@ export default async function DepartmentWorkspacePage({
             <p className="text-xs font-semibold amharic text-[var(--foreground)]/50 mb-2">
               የቅርብ ተግባራት
             </p>
-            <TaskPanel departmentCode={slug} initial={tasks ?? []} />
+            <TaskPanel departmentCode={slug} initial={tasks} />
           </div>
         </div>
       )}
 
       {activeTab === "tasks" && (
-        <TaskPanel departmentCode={slug} initial={tasks ?? []} />
+        <TaskPanel departmentCode={slug} initial={tasks} />
       )}
-      {activeTab === "finance" && (
-        <FinancePanel initial={(finance as never) ?? []} />
-      )}
-      {activeTab === "inventory" && (
-        <InventoryPanel initial={(inventory as never) ?? []} />
-      )}
+      {activeTab === "finance" && <FinancePanel initial={finance} />}
+      {activeTab === "inventory" && <InventoryPanel initial={inventory} />}
       {(activeTab === "attendance" || activeTab === "choir") && (
         <RecordPanel
           departmentCode={slug}
           recordType="attendance"
-          title={
-            activeTab === "choir" ? "የመዝሙር ልምምድ መዝገብ" : "የመገኘት መዝገብ"
-          }
-          initial={(records ?? []).filter((r) => r.record_type === "attendance")}
+          title={activeTab === "choir" ? "የመዝሙር ልምምድ መዝገብ" : "የመገኘት መዝገብ"}
+          initial={records.filter((r) => r.record_type === "attendance")}
         />
       )}
       {activeTab === "correspondence" && (
@@ -172,9 +220,7 @@ export default async function DepartmentWorkspacePage({
           departmentCode={slug}
           recordType="correspondence"
           title="ደብዳቤና ማስታወሻ"
-          initial={(records ?? []).filter(
-            (r) => r.record_type === "correspondence"
-          )}
+          initial={records.filter((r) => r.record_type === "correspondence")}
         />
       )}
       {activeTab === "media" && (
@@ -182,7 +228,7 @@ export default async function DepartmentWorkspacePage({
           departmentCode={slug}
           recordType="media"
           title="ሚዲያ መዝገብ"
-          initial={(records ?? []).filter((r) => r.record_type === "media")}
+          initial={records.filter((r) => r.record_type === "media")}
         />
       )}
       {activeTab === "charity" && (
@@ -190,7 +236,7 @@ export default async function DepartmentWorkspacePage({
           departmentCode={slug}
           recordType="event"
           title="የበጎ አድራጎት ፕሮጀክቶች"
-          initial={(records ?? []).filter((r) => r.record_type === "event")}
+          initial={records.filter((r) => r.record_type === "event")}
         />
       )}
     </div>

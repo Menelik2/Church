@@ -29,20 +29,32 @@ export async function getSessionProfile(): Promise<{
   userId: string;
   profile: Profile | null;
 } | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) return null;
+    if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
 
-  return { userId: user.id, profile: profile as Profile | null };
+    if (error || !profile) {
+      // Auth user exists but no profile row — treat as no access
+      return {
+        userId: user.id,
+        profile: null,
+      };
+    }
+
+    return { userId: user.id, profile: profile as Profile };
+  } catch {
+    return null;
+  }
 }
 
 export async function requireAdmin(
