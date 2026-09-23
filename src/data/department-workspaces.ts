@@ -128,7 +128,8 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_am: "ሕፃናት ክፍል",
     title_en: "Children",
     is_leadership: false,
-    description_am: "የሕፃናት ትምህርት፣ መርሐግብርና መገኘት።",
+    description_am:
+      "ደቂቅ (7–10) እና ማዕከላዊያን (11–17) — ትምህርት፣ ግብረገብ፣ ሥርዓተ-ትምህርት፣ ድራማና ሐዋርያዊ ጉዞ፤ ሩብ ዓመታዊ ሪፖርት።",
     modules: ["overview", "children", "classes", "attendance", "tasks"],
     actions: [
       { label_am: "መገኘት", href: "/admin/workspace/hitsanat?tab=attendance", module: "attendance" },
