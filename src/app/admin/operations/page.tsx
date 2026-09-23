@@ -12,9 +12,13 @@ import {
   FileText,
   Vote,
   ClipboardList,
+  UserCheck,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+const MS_DAY = 24 * 60 * 60 * 1000;
+const ALERT_DAYS = 14;
 
 export default async function OperationsHubPage() {
   await requireAdmin();
@@ -53,6 +57,47 @@ export default async function OperationsHubPage() {
     }),
   ]);
 
+  // Missed 2+ weeks: active servants with no present in last 14 days
+  let attendanceAlerts = 0;
+  try {
+    const [{ data: active }, { data: presents }] = await Promise.all([
+      supabase
+        .from("servants")
+        .select("id, joined_at, created_at")
+        .eq("status", "active")
+        .limit(500),
+      supabase
+        .from("servant_attendance")
+        .select("servant_id, attendance_date")
+        .eq("status", "present")
+        .order("attendance_date", { ascending: false })
+        .limit(3000),
+    ]);
+    const lastPresent = new Map<string, string>();
+    for (const r of presents ?? []) {
+      if (!lastPresent.has(r.servant_id)) {
+        lastPresent.set(r.servant_id, r.attendance_date);
+      }
+    }
+    const now = Date.now();
+    for (const s of active ?? []) {
+      const last =
+        lastPresent.get(s.id) ||
+        s.joined_at ||
+        (s.created_at ? String(s.created_at).slice(0, 10) : null);
+      if (!last) {
+        attendanceAlerts += 1;
+        continue;
+      }
+      const t = new Date(last + (last.length === 10 ? "T12:00:00Z" : "")).getTime();
+      if (Number.isNaN(t) || (now - t) / MS_DAY >= ALERT_DAYS) {
+        attendanceAlerts += 1;
+      }
+    }
+  } catch {
+    attendanceAlerts = 0;
+  }
+
   const cards = [
     {
       href: "/admin/operations/membership",
@@ -67,6 +112,13 @@ export default async function OperationsHubPage() {
       value: onboardingOpen,
       icon: ClipboardList,
       hint: "checklist + አማካሪ",
+    },
+    {
+      href: "/admin/operations/attendance",
+      label: "መገኘት / ክትትል",
+      value: attendanceAlerts,
+      icon: UserCheck,
+      hint: "2 ሳምንት+ ያልታዩ",
     },
     {
       href: "/admin/operations/weddings",
