@@ -29,6 +29,7 @@ export default async function AdminLayout({
 async function AdminShell({ children }: { children: React.ReactNode }) {
   const session = await getSessionProfile();
 
+  // Login (and other unauthenticated admin routes) render without chrome
   if (!session?.profile) {
     return <>{children}</>;
   }
@@ -40,6 +41,10 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
     redirect("/");
   }
 
+  if (session.profile.is_active === false) {
+    redirect("/admin/login?error=inactive");
+  }
+
   return (
     <div className="flex min-h-screen">
       <aside className="hidden md:flex w-60 flex-col border-r border-[var(--border)] bg-[var(--card)] sticky top-0 h-screen">
@@ -48,8 +53,9 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
             አስተዳደር
           </Link>
           <p className="text-xs text-[var(--foreground)]/50 mt-0.5 truncate">
-            {session.profile.email}
+            {session.profile.full_name_am || session.profile.email}
           </p>
+          <p className="text-[10px] text-[var(--primary)]/80 mt-0.5">{role}</p>
         </div>
         <AdminNav />
         <div className="mt-auto p-4 border-t border-[var(--border)]">
@@ -65,7 +71,10 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 overflow-auto pb-20 md:pb-0">
         <div className="md:hidden border-b border-[var(--border)] px-3 py-2.5 flex items-center justify-between bg-[var(--card)] sticky top-0 z-30">
-          <Link href="/admin" className="font-bold text-[var(--primary)] amharic text-sm">
+          <Link
+            href="/admin"
+            className="font-bold text-[var(--primary)] amharic text-sm"
+          >
             አስተዳደር
           </Link>
           <AdminSignOut />

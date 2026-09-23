@@ -12,12 +12,14 @@ import {
   Settings,
   Workflow,
   LayoutGrid,
+  GitBranch,
 } from "lucide-react";
 
 const links = [
   { href: "/admin", label: "ዳሽቦርድ", icon: LayoutDashboard },
   { href: "/admin/workspace", label: "ክፍል ዳሽቦርድ", icon: LayoutGrid },
   { href: "/admin/operations", label: "ሂደቶች", icon: Workflow },
+  { href: "/admin/operations/journey", label: "የአባል ጉዞ", icon: GitBranch },
   { href: "/admin/articles", label: "አንቀጾች", icon: BookOpen },
   { href: "/admin/announcements", label: "ማስታወቂያዎች", icon: Megaphone },
   { href: "/admin/events", label: "ዝግጅቶች", icon: Calendar },
@@ -35,7 +37,11 @@ export function AdminNav() {
         const active =
           href === "/admin"
             ? pathname === "/admin"
-            : pathname.startsWith(href);
+            : href === "/admin/operations"
+              ? pathname === "/admin/operations" ||
+                (pathname.startsWith("/admin/operations/") &&
+                  !pathname.startsWith("/admin/operations/journey"))
+              : pathname === href || pathname.startsWith(href + "/");
         return (
           <Link
             key={href}

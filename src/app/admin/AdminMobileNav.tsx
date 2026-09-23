@@ -21,11 +21,10 @@ const items = [
 export function AdminMobileNav() {
   const pathname = usePathname();
 
-  // Hide on login
   if (pathname === "/admin/login") return null;
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[var(--border)] bg-[var(--card)]/95 backdrop-blur-md safe-area-pb">
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[var(--border)] bg-[var(--card)]/95 backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)]">
       <ul className="grid grid-cols-5 gap-0">
         {items.map(({ href, label, icon: Icon, exact }) => {
           const active = exact
