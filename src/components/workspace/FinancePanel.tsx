@@ -14,7 +14,7 @@ type Entry = {
 
 export function FinancePanel({ initial }: { initial: Entry[] }) {
   const [entries, setEntries] = useState(initial);
-  const [type, setType] = useState<"income" | "expense">("income");
+  const [entryType, setEntryType] = useState<"income" | "expense">("income");
   const [category, setCategory] = useState("monthly_contribution");
   const [amount, setAmount] = useState("");
   const [desc, setDesc] = useState("");
@@ -28,23 +28,20 @@ export function FinancePanel({ initial }: { initial: Entry[] }) {
     .filter((e) => e.entry_type === "expense")
     .reduce((s, e) => s + Number(e.amount_birr), 0);
 
-  async function onSave(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const amt = parseFloat(amount);
-    if (!amt || amt <= 0) return;
     setSaving(true);
     setMsg(null);
     const supabase = createClient();
     const { data, error } = await supabase
       .from("finance_entries")
       .insert({
-        entry_type: type,
+        entry_type: entryType,
         category,
-        amount_birr: amt,
+        amount_birr: Number(amount),
         description_am: desc || null,
-        entry_date: new Date().toISOString().slice(0, 10),
       })
-      .select("*")
+      .select("id, entry_type, category, amount_birr, description_am, entry_date")
       .single();
     setSaving(false);
     if (error) {
@@ -61,40 +58,28 @@ export function FinancePanel({ initial }: { initial: Entry[] }) {
     <div className="space-y-5">
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-center">
-          <p className="text-[10px] text-emerald-700 amharic">ገቢ</p>
-          <p className="text-lg font-bold tabular-nums text-emerald-800">
-            {income.toLocaleString()}
-          </p>
+          <p className="text-[10px] amharic text-emerald-700">ገቢ</p>
+          <p className="text-lg font-bold tabular-nums text-emerald-800">{income.toFixed(0)}</p>
         </div>
         <div className="rounded-xl bg-red-50 border border-red-100 p-3 text-center">
-          <p className="text-[10px] text-red-700 amharic">ወጪ</p>
-          <p className="text-lg font-bold tabular-nums text-red-800">
-            {expense.toLocaleString()}
-          </p>
+          <p className="text-[10px] amharic text-red-700">ወጪ</p>
+          <p className="text-lg font-bold tabular-nums text-red-800">{expense.toFixed(0)}</p>
         </div>
         <div className="rounded-xl bg-[var(--muted)] border border-[var(--border)] p-3 text-center">
-          <p className="text-[10px] text-[var(--foreground)]/60 amharic">ቀሪ</p>
-          <p className="text-lg font-bold tabular-nums">
-            {(income - expense).toLocaleString()}
-          </p>
+          <p className="text-[10px] amharic text-[var(--foreground)]/60">ቀሪ</p>
+          <p className="text-lg font-bold tabular-nums">{(income - expense).toFixed(0)}</p>
         </div>
       </div>
 
-      <form onSubmit={onSave} className="space-y-3 rounded-2xl border border-[var(--border)] p-4">
+      <form onSubmit={onSubmit} className="space-y-3 rounded-2xl border border-[var(--border)] p-4">
         <div className="grid grid-cols-2 gap-2">
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as "income" | "expense")}
-            className="rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm"
-          >
+          <select value={entryType} onChange={(e) => setEntryType(e.target.value as "income" | "expense")}
+            className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm amharic">
             <option value="income">ገቢ</option>
             <option value="expense">ወጪ</option>
           </select>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm"
-          >
+          <select value={category} onChange={(e) => setCategory(e.target.value)}
+            className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm amharic">
             <option value="monthly_contribution">ወርሃዊ መዋጮ</option>
             <option value="donation">ስጦታ</option>
             <option value="expense_ops">የስራ ወጪ</option>
@@ -102,49 +87,23 @@ export function FinancePanel({ initial }: { initial: Entry[] }) {
             <option value="other">ሌላ</option>
           </select>
         </div>
-        <input
-          type="number"
-          step="0.01"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="መጠን (ብር)"
-          required
-          className="w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm"
-        />
-        <input
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-          placeholder="መግለጫ…"
-          className="w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm amharic"
-        />
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full rounded-xl bg-[var(--primary)] py-2.5 text-sm font-medium text-white disabled:opacity-50"
-        >
+        <input type="number" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)}
+          placeholder="መጠን (ብር)" className="w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm" />
+        <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="መግለጫ…"
+          className="w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm amharic" />
+        <button type="submit" disabled={saving}
+          className="w-full rounded-xl bg-[var(--primary)] py-2.5 text-sm font-medium text-white disabled:opacity-50">
           {saving ? "በማስቀመጥ…" : "መዝግብ"}
         </button>
-        {msg && <p className="text-xs text-emerald-600">{msg}</p>}
+        {msg && <p className="text-xs text-emerald-600 amharic">{msg}</p>}
       </form>
 
-      <ul className="space-y-2 max-h-64 overflow-y-auto">
+      <ul className="space-y-2">
         {entries.map((e) => (
-          <li
-            key={e.id}
-            className="flex justify-between gap-2 rounded-xl border border-[var(--border)] px-3 py-2 text-sm"
-          >
-            <span className="amharic truncate">
-              {e.description_am || e.category}
-            </span>
-            <span
-              className={
-                e.entry_type === "income"
-                  ? "text-emerald-700 font-semibold tabular-nums"
-                  : "text-red-700 font-semibold tabular-nums"
-              }
-            >
-              {e.entry_type === "income" ? "+" : "-"}
-              {Number(e.amount_birr).toLocaleString()}
+          <li key={e.id} className="flex justify-between rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm">
+            <span className="amharic">{e.description_am || e.category}</span>
+            <span className={e.entry_type === "income" ? "text-emerald-700 font-semibold" : "text-red-700 font-semibold"}>
+              {e.entry_type === "income" ? "+" : "-"}{Number(e.amount_birr).toFixed(0)} ብር
             </span>
           </li>
         ))}

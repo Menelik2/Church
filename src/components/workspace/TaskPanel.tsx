@@ -80,9 +80,7 @@ export function TaskPanel({
           <Plus className="h-4 w-4" /> አክል
         </button>
       </form>
-      {msg && (
-        <p className="text-xs text-emerald-600 amharic">{msg}</p>
-      )}
+      {msg && <p className="text-xs text-emerald-600 amharic">{msg}</p>}
       <ul className="space-y-2">
         {tasks.length === 0 && (
           <li className="text-sm text-[var(--foreground)]/50 amharic py-6 text-center">
