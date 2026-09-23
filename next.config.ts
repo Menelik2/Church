@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Smaller serverless footprint on Vercel
   output: "standalone",
   poweredByHeader: false,
   compress: true,
