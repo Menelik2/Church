@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Megaphone } from "lucide-react";
 
 export const metadata = {
-  title: "ማስታወቂያዎች",
-  description: "የማኅተመ ክርስቶስ ሰንበት ት/ቤት ማስታወቂያዎች",
+  title: "ወቅታዊ ጉዳዮች",
+  description: "የማኅተመ ክርስቶስ ሰንበት ት/ቤት ወቅታዊ ጉዳዮችና ማስታወቂያዎች",
 };
 
 export default async function AnnouncementsPage() {
@@ -35,9 +35,11 @@ export default async function AnnouncementsPage() {
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         <Megaphone className="h-7 w-7 text-[var(--primary)]" />
-        <h1 className="text-3xl font-bold text-[var(--primary)] amharic">ማስታወቂያዎች</h1>
+        <h1 className="text-3xl font-bold text-[var(--primary)] amharic">ወቅታዊ ጉዳዮች</h1>
       </div>
-      <p className="mt-2 text-[var(--foreground)]/60 amharic">የሰንበት ት/ቤቱ ኦፊሴላዊ ማስታወቂያዎች</p>
+      <p className="mt-2 text-[var(--foreground)]/60 amharic">
+        የሰንበት ት/ቤቱ ኦፊሴላዊ ማስታወቂያዎችና ዜናዎች
+      </p>
 
       <ul className="mt-10 space-y-4">
         {items.map((a) => (
@@ -45,21 +47,31 @@ export default async function AnnouncementsPage() {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <h2 className="text-lg font-semibold amharic text-[var(--primary)]">{a.title_am}</h2>
               {a.is_featured && (
-                <span className="text-xs rounded-full bg-[var(--color-gold-100)] text-[var(--color-gold-800)] px-2 py-0.5">ባህሪይ</span>
+                <span className="text-xs rounded-full bg-[var(--color-gold-100)] text-[var(--color-gold-800)] px-2 py-0.5">
+                  በመነሻ
+                </span>
               )}
             </div>
             <time className="text-xs text-[var(--foreground)]/50">
               {new Date(a.published_at || a.created_at).toLocaleDateString("am-ET")}
             </time>
-            <p className="mt-3 text-sm amharic leading-relaxed whitespace-pre-wrap text-[var(--foreground)]/80">{a.body_am}</p>
+            <p className="mt-3 text-sm amharic leading-relaxed whitespace-pre-wrap text-[var(--foreground)]/80">
+              {a.body_am}
+            </p>
           </li>
         ))}
         {items.length === 0 && (
           <li className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-sm text-[var(--foreground)]/50 amharic">
-            አሁን ምንም ታትሞ የወጣ ማስታወቂያ የለም።
+            አሁን ምንም ታትሞ የወጣ ወቅታዊ ጉዳይ የለም።
           </li>
         )}
       </ul>
+
+      <p className="mt-8 text-center">
+        <Link href="/" className="text-sm font-semibold text-[var(--primary)] amharic">
+          ← ወደ መነሻ
+        </Link>
+      </p>
     </div>
   );
 }

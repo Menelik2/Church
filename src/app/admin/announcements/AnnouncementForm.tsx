@@ -20,7 +20,7 @@ export function AnnouncementForm() {
   const [titleAm, setTitleAm] = useState("");
   const [bodyAm, setBodyAm] = useState("");
   const [published, setPublished] = useState(true);
-  const [featured, setFeatured] = useState(false);
+  const [featured, setFeatured] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,47 +50,58 @@ export function AnnouncementForm() {
 
     setTitleAm("");
     setBodyAm("");
+    setFeatured(true);
     router.refresh();
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1">ርዕስ</label>
+        <label className="block text-sm font-medium mb-1 amharic">ርዕስ</label>
         <input
           value={titleAm}
           onChange={(e) => setTitleAm(e.target.value)}
           required
+          placeholder="የወቅታዊ ጉዳይ ርዕስ"
           className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm amharic"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">ይዘት</label>
+        <label className="block text-sm font-medium mb-1 amharic">ይዘት</label>
         <textarea
           value={bodyAm}
           onChange={(e) => setBodyAm(e.target.value)}
           required
           rows={5}
+          placeholder="ሙሉ መግለጫ…"
           className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm amharic"
         />
       </div>
-      <div className="flex flex-wrap gap-4 text-sm">
+      <div className="flex flex-wrap gap-4 text-sm amharic">
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
-          አትም
+          <input
+            type="checkbox"
+            checked={published}
+            onChange={(e) => setPublished(e.target.checked)}
+          />
+          አትም (በድረ-ገጽ ይታይ)
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
-          ባህሪይ
+          <input
+            type="checkbox"
+            checked={featured}
+            onChange={(e) => setFeatured(e.target.checked)}
+          />
+          በመነሻ ገጽ አሳይ
         </label>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="submit"
         disabled={saving}
-        className="rounded-xl bg-[var(--primary)] text-white px-4 py-2 text-sm disabled:opacity-50"
+        className="rounded-xl bg-[var(--primary)] text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50 amharic"
       >
-        {saving ? "…" : "ፍጠር"}
+        {saving ? "እየተቀመጠ…" : "ወቅታዊ ጉዳይ ፍጠር"}
       </button>
     </form>
   );
