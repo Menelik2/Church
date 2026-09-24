@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { ARTICLES, DOCUMENT_META } from "@/data/regulations";
+import { RulesSearch } from "@/components/rules/RulesSearch";
 
 export const metadata = {
   title: "ሕግና ደንብ | የውስጥ መተዳደሪያ",
@@ -56,13 +57,13 @@ export default function RulesPage() {
             አንቀጽ 1–16 · በድረ-ገጽ ሙሉ ማንበብ · {DOCUMENT_META.revision_date_am}
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link
-              href="/search"
+            <a
+              href="#rules-search"
               className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-[var(--primary)] shadow-lg"
             >
               <Search className="h-4 w-4" />
               <span className="amharic">በሕጉ ውስጥ ፈልግ</span>
-            </Link>
+            </a>
             <Link
               href="/pdf"
               className="inline-flex items-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur"
@@ -95,6 +96,10 @@ export default function RulesPage() {
           })}
         </div>
       </section>
+
+      <div id="rules-search" className="relative z-20 mt-6 scroll-mt-20">
+        <RulesSearch />
+      </div>
 
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 space-y-12">
         {GROUPS.map((g) => {
