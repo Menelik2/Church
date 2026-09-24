@@ -3,6 +3,7 @@ import { Noto_Sans_Ethiopic, Noto_Serif_Ethiopic } from "next/font/google";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { SiteIntroFlash } from "@/components/layout/SiteIntroFlash";
 import "./globals.css";
 
 const notoSansEthiopic = Noto_Sans_Ethiopic({
@@ -54,6 +55,7 @@ export default function RootLayout({
       className={`${notoSansEthiopic.variable} ${notoSerifEthiopic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-[family-name:var(--font-ethiopic)] bg-[var(--background)] text-[var(--foreground)]">
+        <SiteIntroFlash />
         <Navbar />
         <main className="flex-1 w-full min-w-0">{children}</main>
         <Footer />
