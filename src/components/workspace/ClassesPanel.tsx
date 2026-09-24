@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatAppError } from "@/lib/supabase/safe-count";
+import { Plus } from "lucide-react";
 
 type ClassRow = {
   id: string;
@@ -13,154 +14,252 @@ type ClassRow = {
   is_active: boolean;
 };
 
-const LEVELS = [
-  { value: "ሕፃናት", label: "ሕፃናት" },
-  { value: "ወጣቶች", label: "ወጣቶች" },
-  { value: "አዋቂ", label: "አዋቂ" },
-];
+type AttendanceRow = {
+  id: string;
+  class_id: string;
+  attendance_date: string;
+  present_count: number;
+  notes: string | null;
+};
 
-export function ClassesPanel({ initial }: { initial: ClassRow[] }) {
-  const [rows, setRows] = useState(initial);
+export function ClassesPanel({
+  initialClasses,
+  initialAttendance,
+  departmentCode: _departmentCode,
+  focusAttendance = false,
+  initial,
+}: {
+  initialClasses?: ClassRow[];
+  initialAttendance?: AttendanceRow[];
+  departmentCode?: string;
+  focusAttendance?: boolean;
+  /** Legacy single-list API */
+  initial?: ClassRow[];
+}) {
+  const [classes, setClasses] = useState(initialClasses ?? initial ?? []);
+  const [attendance, setAttendance] = useState(initialAttendance ?? []);
   const [title, setTitle] = useState("");
-  const [level, setLevel] = useState("ወጣቶች");
+  const [level, setLevel] = useState("");
   const [teacher, setTeacher] = useState("");
-  const [schedule, setSchedule] = useState("");
+  const [classId, setClassId] = useState("");
+  const [present, setPresent] = useState("");
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
 
-  async function onAdd(e: React.FormEvent) {
+  async function addClass(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
     setSaving(true);
-    setMsg(null);
-    setErr(null);
+    setError(null);
+    setOk(null);
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
+      const { data, error: dbErr } = await supabase
         .from("education_classes")
         .insert({
           title_am: title.trim(),
-          level_am: level || null,
+          level_am: level.trim() || null,
           teacher_name: teacher.trim() || null,
-          schedule_note: schedule.trim() || null,
           is_active: true,
         })
-        .select(
-          "id, title_am, level_am, schedule_note, teacher_name, is_active"
-        )
+        .select("id, title_am, level_am, schedule_note, teacher_name, is_active")
         .single();
-      if (error) throw error;
-      if (data) setRows((list) => [data as ClassRow, ...list]);
+      if (dbErr) {
+        setError(formatAppError(dbErr));
+        return;
+      }
+      if (data) setClasses((c) => [data as ClassRow, ...c]);
       setTitle("");
+      setLevel("");
       setTeacher("");
-      setSchedule("");
-      setMsg("ክፍል ተመዝግቧል");
-    } catch (e) {
-      setErr(formatAppError(e));
+      setOk("ክፍሉ ተመዝግቧል");
+    } catch (err) {
+      setError(formatAppError(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function addAttendance(e: React.FormEvent) {
+    e.preventDefault();
+    if (!classId || !present.trim()) return;
+    setSaving(true);
+    setError(null);
+    setOk(null);
+    try {
+      const supabase = createClient();
+      const { data, error: dbErr } = await supabase
+        .from("class_attendance")
+        .insert({
+          class_id: classId,
+          present_count: Number(present) || 0,
+          attendance_date: new Date().toISOString().slice(0, 10),
+        })
+        .select("id, class_id, attendance_date, present_count, notes")
+        .single();
+      if (dbErr) {
+        setError(formatAppError(dbErr));
+        return;
+      }
+      if (data) setAttendance((a) => [data as AttendanceRow, ...a]);
+      setPresent("");
+      setOk("መገኘት ተመዝግቧል");
+    } catch (err) {
+      setError(formatAppError(err));
     } finally {
       setSaving(false);
     }
   }
 
   async function toggleActive(id: string, is_active: boolean) {
+    setError(null);
     try {
       const supabase = createClient();
-      const { error } = await supabase
+      const { error: dbErr } = await supabase
         .from("education_classes")
         .update({ is_active: !is_active })
         .eq("id", id);
-      if (error) throw error;
-      setRows((list) =>
-        list.map((r) => (r.id === id ? { ...r, is_active: !is_active } : r))
+      if (dbErr) {
+        setError(formatAppError(dbErr));
+        return;
+      }
+      setClasses((list) =>
+        list.map((c) => (c.id === id ? { ...c, is_active: !is_active } : c))
       );
-    } catch (e) {
-      setErr(formatAppError(e));
+    } catch (err) {
+      setError(formatAppError(err));
     }
   }
 
+  const className = (id: string) =>
+    classes.find((c) => c.id === id)?.title_am ?? "—";
+
   return (
-    <div className="space-y-4">
-      <form
-        onSubmit={onAdd}
-        className="space-y-2 rounded-2xl border border-[var(--border)] p-4"
-      >
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="የክፍል ስም…"
-          required
-          className="w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm amharic"
-        />
-        <div className="grid grid-cols-2 gap-2">
-          <select
-            value={level}
-            onChange={(e) => setLevel(e.target.value)}
-            className="rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm amharic"
-          >
-            {LEVELS.map((l) => (
-              <option key={l.value} value={l.value}>
-                {l.label}
-              </option>
+    <div className="space-y-8">
+      {error && (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 amharic">
+          {error}
+        </p>
+      )}
+      {ok && (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 amharic">
+          {ok}
+        </p>
+      )}
+
+      {!focusAttendance && (
+        <section>
+          <h3 className="text-sm font-semibold amharic mb-3">የትምህርት ክፍሎች</h3>
+          <form onSubmit={addClass} className="grid gap-2 sm:grid-cols-4 mb-4">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="የክፍል ስም…"
+              className="sm:col-span-2 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm amharic"
+            />
+            <input
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              placeholder="ደረጃ (ምሳ. ሕፃናት)"
+              className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm amharic"
+            />
+            <input
+              value={teacher}
+              onChange={(e) => setTeacher(e.target.value)}
+              placeholder="መምህር"
+              className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm amharic"
+            />
+            <button
+              type="submit"
+              disabled={saving}
+              className="sm:col-span-4 inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" /> ክፍል አክል
+            </button>
+          </form>
+          <ul className="space-y-2">
+            {classes.length === 0 && (
+              <li className="text-sm text-[var(--foreground)]/50 amharic py-4 text-center">
+                ምንም ክፍል የለም
+              </li>
+            )}
+            {classes.map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium amharic">{c.title_am}</p>
+                  <p className="text-[11px] text-[var(--foreground)]/45 amharic">
+                    {[c.level_am, c.teacher_name].filter(Boolean).join(" · ") ||
+                      "—"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleActive(c.id, c.is_active)}
+                  className={
+                    c.is_active
+                      ? "text-xs rounded-lg bg-emerald-500/15 text-emerald-700 px-2 py-1 amharic"
+                      : "text-xs rounded-lg bg-[var(--muted)] text-[var(--foreground)]/50 px-2 py-1 amharic"
+                  }
+                >
+                  {c.is_active ? "ንቁ" : "ቦዝኗል"}
+                </button>
+              </li>
             ))}
+          </ul>
+        </section>
+      )}
+
+      <section>
+        <h3 className="text-sm font-semibold amharic mb-3">የቀን መገኘት</h3>
+        <form onSubmit={addAttendance} className="flex flex-wrap gap-2 mb-4">
+          <select
+            value={classId}
+            onChange={(e) => setClassId(e.target.value)}
+            className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm amharic min-w-[10rem]"
+          >
+            <option value="">ክፍል ምረጥ</option>
+            {classes
+              .filter((c) => c.is_active)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title_am}
+                </option>
+              ))}
           </select>
           <input
-            value={teacher}
-            onChange={(e) => setTeacher(e.target.value)}
-            placeholder="መምህር…"
-            className="rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm amharic"
+            type="number"
+            min={0}
+            value={present}
+            onChange={(e) => setPresent(e.target.value)}
+            placeholder="የተገኙ ቁጥር"
+            className="w-28 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm"
           />
-        </div>
-        <input
-          value={schedule}
-          onChange={(e) => setSchedule(e.target.value)}
-          placeholder="መርሐግብር (ለም. እሁድ 10:00)…"
-          className="w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm amharic"
-        />
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full rounded-xl bg-[var(--primary)] py-2.5 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {saving ? "በማስቀመጥ…" : "ክፍል አክል"}
-        </button>
-        {msg && <p className="text-xs text-emerald-600 amharic">{msg}</p>}
-        {err && <p className="text-xs text-red-600 amharic">{err}</p>}
-      </form>
-
-      <ul className="space-y-2">
-        {rows.length === 0 && (
-          <li className="text-center text-sm text-[var(--foreground)]/50 amharic py-6">
-            ክፍል አልተመዘገበም
-          </li>
-        )}
-        {rows.map((r) => (
-          <li
-            key={r.id}
-            className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] px-3 py-3"
+          <button
+            type="submit"
+            disabled={saving || !classId}
+            className="inline-flex items-center gap-1 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
           >
-            <div className="min-w-0">
-              <p className="text-sm font-medium amharic truncate">{r.title_am}</p>
-              <p className="text-[11px] text-[var(--foreground)]/50 amharic">
-                {r.level_am || "—"}
-                {r.teacher_name ? ` · ${r.teacher_name}` : ""}
-                {r.schedule_note ? ` · ${r.schedule_note}` : ""}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => toggleActive(r.id, r.is_active)}
-              className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-medium amharic ${
-                r.is_active
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                  : "bg-[var(--muted)] text-[var(--foreground)]/50"
-              }`}
+            መዝግብ
+          </button>
+        </form>
+        <ul className="space-y-2">
+          {attendance.slice(0, 20).map((a) => (
+            <li
+              key={a.id}
+              className="flex justify-between rounded-xl border border-[var(--border)] px-3 py-2 text-sm amharic"
             >
-              {r.is_active ? "ንቁ" : "ቦዘነ"}
-            </button>
-          </li>
-        ))}
-      </ul>
+              <span>
+                {className(a.class_id)} · {a.attendance_date}
+              </span>
+              <span className="tabular-nums font-medium">{a.present_count}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
