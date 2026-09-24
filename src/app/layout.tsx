@@ -55,7 +55,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-[family-name:var(--font-ethiopic)] bg-[var(--background)] text-[var(--foreground)]">
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 w-full min-w-0">{children}</main>
         <Footer />
         <MobileBottomNav />
       </body>

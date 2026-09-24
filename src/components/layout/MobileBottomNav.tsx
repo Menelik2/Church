@@ -12,7 +12,7 @@ const tabs = [
     href: "/rules",
     label: "ሕግ",
     icon: BookOpen,
-    match: (p: string) => p.startsWith("/rules") || p.startsWith("/pdf"),
+    match: (p: string) => p.startsWith("/rules") || p.startsWith("/pdf") || p.startsWith("/search"),
   },
   {
     href: "/departments",
@@ -39,7 +39,8 @@ const tabs = [
       p.startsWith("/vision") ||
       p.startsWith("/mission") ||
       p.startsWith("/objectives") ||
-      p.startsWith("/organization"),
+      p.startsWith("/organization") ||
+      p.startsWith("/programs"),
   },
 ];
 
@@ -50,7 +51,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-50 lg:hidden border-t border-[var(--border)] bg-[var(--background)]/92 backdrop-blur-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.06)]"
+      className="fixed bottom-0 inset-x-0 z-50 md:hidden border-t border-[var(--border)] bg-[var(--background)]/92 backdrop-blur-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.06)]"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="ዋና አሰሳ"
     >
@@ -65,9 +66,7 @@ export function MobileBottomNav() {
                 color="primary"
                 className={cn(
                   "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium",
-                  active
-                    ? "text-[var(--primary)]"
-                    : "text-[var(--foreground)]/45"
+                  active ? "text-[var(--primary)]" : "text-[var(--foreground)]/45"
                 )}
               >
                 {active && (
@@ -83,10 +82,7 @@ export function MobileBottomNav() {
                     active && "bg-[var(--primary)]/10"
                   )}
                 >
-                  <Icon
-                    className={cn("h-5 w-5", active && "stroke-[2.35]")}
-                    aria-hidden
-                  />
+                  <Icon className={cn("h-5 w-5", active && "stroke-[2.35]")} aria-hidden />
                 </span>
                 <span className="amharic leading-none">{tab.label}</span>
               </RippleLink>
