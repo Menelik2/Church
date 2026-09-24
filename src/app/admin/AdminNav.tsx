@@ -21,7 +21,7 @@ const links = [
   { href: "/admin/operations", label: "ሂደቶች", icon: Workflow },
   { href: "/admin/operations/journey", label: "የአባል ጉዞ", icon: GitBranch },
   { href: "/admin/articles", label: "አንቀጾች", icon: BookOpen },
-  { href: "/admin/announcements", label: "ማስታወቂያዎች", icon: Megaphone },
+  { href: "/admin/announcements", label: "ወቅታዊ ጉዳዮች", icon: Megaphone },
   { href: "/admin/events", label: "ዝግጅቶች", icon: Calendar },
   { href: "/admin/departments", label: "ክፍሎች", icon: Building2 },
   { href: "/admin/messages", label: "መልዕክቶች", icon: Mail },
