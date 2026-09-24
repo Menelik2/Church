@@ -188,12 +188,15 @@ export const DEPARTMENT_WORKSPACES: DepartmentWorkspace[] = [
     title_am: "ሚዲያ እና ዶክመንቴሽን ክፍል",
     title_en: "Media & Documentation",
     is_leadership: false,
-    description_am: "ፎቶ፣ ቪዲዮ፣ ዶክመንት መመዝገብና ማህደር — ተጠሪነት ለሰብሳቢ።",
+    description_am:
+      "ተጠሪነት ለሰብሳቢ — ቀረጻ (ፎቶ/ድምጽ/ቪዲዮ)፣ ቅንብር፣ ዶክመንቴሽን፣ ባነር/ህትመት፣ ማህበራዊ ሚዲያ (ፌስቡክ/ቴሌግራም)፣ ዜናና ዘገባ። ንዑስ፡ ቀረጻ፣ ቅንብር፣ በይነ መረብ፣ ቁጥጥር፣ ዶክመንቴሽን፣ ጋዜጠኝነት፣ ስልጠና።",
     modules: ["overview", "media", "tasks", "reports"],
     actions: [
       { label_am: "ሚዲያ መመዝገብ", href: "/admin/workspace/media?tab=media", module: "media" },
       { label_am: "ተግባራት", href: "/admin/workspace/media?tab=tasks", module: "tasks" },
       { label_am: "ማስታወቂያ", href: "/admin/announcements", module: "overview" },
+      { label_am: "ዝግጅቶች", href: "/admin/events", module: "overview" },
+      { label_am: "ክፍል ገጽ", href: "/departments/media", module: "overview" },
     ],
   },
   {
