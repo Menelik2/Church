@@ -4,7 +4,7 @@ import type { ReactElement } from "react";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ARTICLES, DOCUMENT_META } from "@/data/regulations";
-import { Search, BookOpen, ArrowRight } from "lucide-react";
+import { Search, BookOpen, ArrowRight, SearchX, AlertCircle } from "lucide-react";
 
 type Hit = {
   number: number;
@@ -13,27 +13,43 @@ type Hit = {
   snippet: string;
 };
 
-function searchArticles(q: string): Hit[] {
+const SUGGESTIONS = ["አገልጋይ", "ጠቅላላ ጉባኤ", "ራዕይ", "መብት", "11"] as const;
+
+type SearchMeta = {
+  hits: Hit[];
+  emptyReason: null | "too_short" | "invalid_number" | "no_match";
+  invalidNumber?: number;
+};
+
+function searchArticles(q: string): SearchMeta {
   const term = q.trim().toLowerCase();
-  if (!term) return [];
+  if (!term) return { hits: [], emptyReason: null };
 
   const numMatch = term.match(/(?:አንቀጽ|art(?:icle)?|#)?\s*(\d{1,2})\s*$/i);
   if (numMatch && term.replace(/\s/g, "").length <= 12) {
     const n = Number(numMatch[1]);
     const art = ARTICLES[String(n)];
     if (art) {
-      return [
-        {
-          number: art.number,
-          title_am: art.title_am,
-          title_en: art.title_en,
-          snippet: art.content_am.replace(/\s+/g, " ").slice(0, 160) + "…",
-        },
-      ];
+      return {
+        hits: [
+          {
+            number: art.number,
+            title_am: art.title_am,
+            title_en: art.title_en,
+            snippet: art.content_am.replace(/\s+/g, " ").slice(0, 160) + "…",
+          },
+        ],
+        emptyReason: null,
+      };
+    }
+    if (/^\d{1,2}$/.test(term.replace(/\s/g, "")) || /አንቀጽ|art|#/i.test(term)) {
+      return { hits: [], emptyReason: "invalid_number", invalidNumber: n };
     }
   }
 
-  if (term.length < 2) return [];
+  if (term.length < 2) {
+    return { hits: [], emptyReason: "too_short" };
+  }
 
   const hits: Hit[] = [];
   for (const art of Object.values(ARTICLES)) {
@@ -57,7 +73,11 @@ function searchArticles(q: string): Hit[] {
       snippet,
     });
   }
-  return hits.sort((a, b) => a.number - b.number);
+  hits.sort((a, b) => a.number - b.number);
+  return {
+    hits,
+    emptyReason: hits.length === 0 ? "no_match" : null,
+  };
 }
 
 function Highlight({ text, term }: { text: string; term: string }) {
@@ -86,7 +106,10 @@ function Highlight({ text, term }: { text: string; term: string }) {
 
 export default function SearchPage() {
   const [q, setQ] = useState("");
-  const results = useMemo(() => searchArticles(q), [q]);
+  const { hits: results, emptyReason, invalidNumber } = useMemo(
+    () => searchArticles(q),
+    [q]
+  );
   const term = q.trim();
 
   return (
@@ -111,15 +134,15 @@ export default function SearchPage() {
             placeholder="ቃል፣ ርዕስ ወይም አንቀጽ ቁጥር… (ለም. መብት፣ 11)"
             className="w-full rounded-2xl border border-[var(--border)] bg-[var(--card)] py-4 pl-12 pr-4 text-base shadow-lg amharic focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-500)]"
             autoFocus
+            aria-describedby="search-status"
           />
         </div>
       </div>
 
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        {term.length >= 1 && (
-          <p className="mb-4 text-sm text-[var(--foreground)]/50 amharic">
-            {results.length} ውጤት
-            {term.length === 1 && results.length === 0 ? " · ቢያንስ 2 ፊደል ይጻፉ" : ""}
+        {term.length >= 1 && results.length > 0 && (
+          <p id="search-status" role="status" aria-live="polite" className="mb-4 text-sm text-[var(--foreground)]/50 amharic">
+            {results.length} ውጤት ተገኝቷል
           </p>
         )}
 
@@ -150,26 +173,116 @@ export default function SearchPage() {
           ))}
         </ul>
 
-        {term.length >= 2 && results.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-[var(--border)] px-6 py-12 text-center">
-            <BookOpen className="mx-auto h-8 w-8 text-[var(--foreground)]/25" />
-            <p className="mt-3 text-sm text-[var(--foreground)]/50 amharic">
-              «{term}» ውጤት አልተገኘም። ሌላ ቃል ይሞክሩ።
+        {/* Empty states */}
+        {emptyReason === "too_short" && (
+          <div
+            id="search-status"
+            role="status"
+            aria-live="polite"
+            className="rounded-2xl border border-amber-200/80 bg-amber-50/50 px-6 py-10 text-center"
+          >
+            <AlertCircle className="mx-auto h-8 w-8 text-amber-600" />
+            <p className="mt-3 text-sm font-semibold amharic text-[var(--foreground)]/80">
+              ቢያንስ 2 ፊደል ይጻፉ
             </p>
+            <p className="mt-1 text-xs text-[var(--foreground)]/50 amharic">
+              ወይም የአንቀጽ ቁጥር ከ 1 እስከ 16
+            </p>
+          </div>
+        )}
+
+        {emptyReason === "invalid_number" && (
+          <div
+            id="search-status"
+            role="status"
+            aria-live="polite"
+            className="rounded-2xl border border-amber-200/80 bg-amber-50/50 px-6 py-10 text-center"
+          >
+            <SearchX className="mx-auto h-8 w-8 text-amber-600" />
+            <p className="mt-3 text-sm font-semibold amharic text-[var(--foreground)]/80">
+              አንቀጽ {invalidNumber} የለም
+            </p>
+            <p className="mt-1 text-xs text-[var(--foreground)]/50 amharic">
+              በሕግና ደንብ ውስጥ አንቀጾች ከ 1 እስከ 16 ብቻ ናቸው
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {[1, 3, 11, 16].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setQ(String(n))}
+                  className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--primary)]"
+                >
+                  አንቀጽ {n}
+                </button>
+              ))}
+            </div>
             <Link href="/rules" className="mt-4 inline-block text-sm font-semibold text-[var(--primary)] amharic">
               ሁሉንም አንቀጾች ይመልከቱ →
             </Link>
           </div>
         )}
 
+        {emptyReason === "no_match" && (
+          <div
+            id="search-status"
+            role="status"
+            aria-live="polite"
+            className="rounded-2xl border border-dashed border-[var(--border)] px-6 py-12 text-center"
+          >
+            <SearchX className="mx-auto h-9 w-9 text-[var(--foreground)]/30" />
+            <p className="mt-3 text-sm font-semibold amharic text-[var(--foreground)]/80">
+              «{term}» ውጤት አልተገኘም
+            </p>
+            <p className="mt-1 text-xs text-[var(--foreground)]/50 amharic">
+              ሆሄት ወይም አጭር ቃል ይሞክሩ · ምሳሌዎች ከታች
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setQ(s)}
+                  className="rounded-full border border-[var(--border)] bg-[var(--card)] px-3.5 py-1.5 text-xs font-medium amharic text-[var(--primary)] shadow-sm transition hover:border-[var(--color-gold-400)]"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              className="mt-4 text-xs font-semibold text-[var(--foreground)]/45 amharic underline-offset-2 hover:underline"
+            >
+              ፍለጋ አጽዳ
+            </button>
+            <div className="mt-2">
+              <Link href="/rules" className="text-sm font-semibold text-[var(--primary)] amharic">
+                ሁሉንም አንቀጾች ይመልከቱ →
+              </Link>
+            </div>
+          </div>
+        )}
+
         {!term && (
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 text-center">
-            <p className="text-sm text-[var(--foreground)]/55 amharic">
-              ምሳሌዎች፦ <span className="font-medium text-[var(--primary)]">አገልጋይ</span> ·{" "}
-              <span className="font-medium text-[var(--primary)]">ጠቅላላ ጉባኤ</span> ·{" "}
-              <span className="font-medium text-[var(--primary)]">11</span>
+            <BookOpen className="mx-auto h-7 w-7 text-[var(--primary)]/40" />
+            <p className="mt-3 text-sm text-[var(--foreground)]/55 amharic">
+              ምሳሌዎች — ጠቅ በማድረግ ይሞክሩ
             </p>
-            <Link href="/rules" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--primary)] amharic">
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setQ(s)}
+                  className="rounded-full border border-[var(--border)] bg-[var(--muted)]/30 px-3.5 py-1.5 text-xs font-medium amharic text-[var(--primary)] transition hover:border-[var(--color-gold-400)]"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <Link href="/rules" className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[var(--primary)] amharic">
               ሕግና ደንብ ማውጫ <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
