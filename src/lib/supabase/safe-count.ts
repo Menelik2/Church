@@ -1,66 +1,55 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatAppError, type AppError } from "@/lib/errors";
 
-export type SafeResult<T> = {
-  data: T;
-  error: AppError | null;
-};
-
-/** Count rows; returns 0 if table missing or RLS blocks. */
+/**
+ * Safe head-count query — never throws; returns 0 on missing table / RLS / network error.
+ */
 export async function safeCount(
   supabase: SupabaseClient,
   table: string,
   filters?: (q: ReturnType<SupabaseClient["from"]>) => unknown
 ): Promise<number> {
-  const r = await safeCountDetailed(supabase, table, filters);
-  return r.data;
-}
-
-export async function safeCountDetailed(
-  supabase: SupabaseClient,
-  table: string,
-  filters?: (q: ReturnType<SupabaseClient["from"]>) => unknown
-): Promise<SafeResult<number>> {
   try {
     let q = supabase.from(table).select("*", { count: "exact", head: true });
-    if (filters) q = filters(q as never) as typeof q;
+    if (filters) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      q = filters(q as any) as typeof q;
+    }
     const { count, error } = await q;
-    if (error) {
-      return { data: 0, error: formatAppError(error) };
-    }
-    return { data: count ?? 0, error: null };
-  } catch (e) {
-    return { data: 0, error: formatAppError(e) };
+    if (error) return 0;
+    return count ?? 0;
+  } catch {
+    return 0;
   }
 }
 
-/** Select list; returns [] on any error (missing table, RLS, network). */
-export async function safeSelect<T>(
+/**
+ * Safe select — returns [] on any error.
+ */
+export async function safeSelect<T = Record<string, unknown>>(
   supabase: SupabaseClient,
   table: string,
-  build: (
-    q: ReturnType<SupabaseClient["from"]>
-  ) => PromiseLike<{ data: T[] | null; error: unknown }>
+  build?: (q: ReturnType<SupabaseClient["from"]>) => unknown
 ): Promise<T[]> {
-  const r = await safeSelectDetailed<T>(supabase, table, build);
-  return r.data;
+  try {
+    let q = supabase.from(table).select("*");
+    if (build) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      q = build(q as any) as typeof q;
+    }
+    const { data, error } = await q;
+    if (error || !data) return [];
+    return data as T[];
+  } catch {
+    return [];
+  }
 }
 
-export async function safeSelectDetailed<T>(
-  supabase: SupabaseClient,
-  table: string,
-  build: (
-    q: ReturnType<SupabaseClient["from"]>
-  ) => PromiseLike<{ data: T[] | null; error: unknown }>
-): Promise<SafeResult<T[]>> {
-  try {
-    const q = supabase.from(table);
-    const { data, error } = await build(q as never);
-    if (error) {
-      return { data: [], error: formatAppError(error) };
-    }
-    return { data: (data as T[]) ?? [], error: null };
-  } catch (e) {
-    return { data: [], error: formatAppError(e) };
+export function formatAppError(err: unknown): string {
+  if (!err) return "ያልታወቀ ስህተት";
+  if (typeof err === "string") return err;
+  if (err instanceof Error) return err.message;
+  if (typeof err === "object" && err !== null && "message" in err) {
+    return String((err as { message: unknown }).message);
   }
+  return "ያልታወቀ ስህተት";
 }

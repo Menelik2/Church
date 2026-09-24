@@ -23,7 +23,10 @@ export type Profile = {
   updated_at: string;
 };
 
+/** Full admin (content + operations + settings) */
 export const ADMIN_ROLES: UserRole[] = ["super_admin", "admin", "editor"];
+
+/** Staff who may enter the admin shell (includes department managers) */
 export const STAFF_ROLES: UserRole[] = [
   "super_admin",
   "admin",
@@ -43,40 +46,29 @@ export async function getSessionProfile(): Promise<{
 
     if (!user) return null;
 
-    const { data: profile, error } = await supabase
+    const { data: profile } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user.id)
-      .maybeSingle();
+      .single();
 
-    if (error || !profile) {
-      return {
-        userId: user.id,
-        profile: null,
-      };
-    }
-
-    return { userId: user.id, profile: profile as Profile };
+    return { userId: user.id, profile: profile as Profile | null };
   } catch {
     return null;
   }
 }
 
+/**
+ * Require one of the given roles (default: full admin).
+ * Redirects to login if not authenticated / not allowed.
+ */
 export async function requireAdmin(
   allowed: UserRole[] = ADMIN_ROLES
 ): Promise<{ userId: string; profile: Profile }> {
   const session = await getSessionProfile();
 
-  if (!session) {
+  if (!session?.profile || !allowed.includes(session.profile.role)) {
     redirect("/admin/login");
-  }
-
-  if (!session.profile) {
-    redirect("/admin/login?error=noprofile");
-  }
-
-  if (!allowed.includes(session.profile.role)) {
-    redirect("/admin/login?error=forbidden");
   }
 
   if (!session.profile.is_active) {
@@ -86,7 +78,21 @@ export async function requireAdmin(
   return { userId: session.userId, profile: session.profile };
 }
 
-/** Leadership + department officers can use workspaces */
-export async function requireStaff() {
+/**
+ * Require any staff role (admin or department_manager).
+ * Use for workspace pages that department managers must access.
+ */
+export async function requireStaff(): Promise<{
+  userId: string;
+  profile: Profile;
+}> {
   return requireAdmin(STAFF_ROLES);
+}
+
+export function isFullAdmin(role: UserRole): boolean {
+  return ADMIN_ROLES.includes(role);
+}
+
+export function isStaffRole(role: UserRole): boolean {
+  return STAFF_ROLES.includes(role);
 }
