@@ -140,6 +140,11 @@ export function HomePageClient({
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }} transition={{ type: "spring", stiffness: 120, damping: 18 }} className="col-span-2 relative h-40 overflow-hidden rounded-2xl border border-[var(--color-gold-300)]/35 shadow-lg sm:col-span-3 sm:h-52 sm:rounded-3xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={churchAerial} alt="የቤተ ክርስቲያን አየር እይታ" className="h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                <p className="text-[11px] font-semibold text-white amharic sm:text-sm">ቤተ ክርስቲያን</p>
+                <p className="mt-0.5 text-[10px] text-white/70 amharic">ደብረ ሰላም በዓለ እግዚአብሔር</p>
+              </div>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }} transition={{ delay: 0.1, type: "spring", stiffness: 120, damping: 18 }} className="col-span-2 relative h-40 overflow-hidden rounded-2xl border border-[var(--color-gold-400)]/45 shadow-lg sm:col-span-2 sm:h-52 sm:rounded-3xl">
               <div className="absolute inset-0 bg-[var(--color-burgundy-900)]" />
