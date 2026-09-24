@@ -5,6 +5,7 @@
  */
 
 import { MEDIA_DEPARTMENT_DETAIL } from "./department-details-media";
+import { ARTS_DEPARTMENT_DETAIL } from "./department-details-arts";
 
 export type DepartmentDetail = {
   slug: string;
@@ -185,6 +186,12 @@ const ALL_DETAILS: Record<string, DepartmentDetail> = {
     intro_am: MEDIA_DEPARTMENT_DETAIL.intro_am,
     duties_am: [...MEDIA_DEPARTMENT_DETAIL.duties_am],
     sub_departments_am: [...MEDIA_DEPARTMENT_DETAIL.sub_departments_am],
+  },
+  "kine-tibeb": {
+    slug: ARTS_DEPARTMENT_DETAIL.slug,
+    intro_am: ARTS_DEPARTMENT_DETAIL.intro_am,
+    duties_am: [...ARTS_DEPARTMENT_DETAIL.duties_am],
+    sub_departments_am: [...ARTS_DEPARTMENT_DETAIL.sub_departments_am],
   },
 };
 
