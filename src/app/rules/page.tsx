@@ -43,7 +43,7 @@ export default function RulesPage() {
   const byNum = Object.fromEntries(Object.values(ARTICLES).map((a) => [a.number, a]));
 
   return (
-    <div className="bg-cross-pattern min-h-screen pb-28 lg:pb-16">
+    <div className="bg-cross-pattern min-h-screen pb-28 md:pb-16">
       <section className="relative overflow-hidden border-b border-[var(--border)] bg-gradient-to-br from-[var(--color-burgundy-950)] via-[var(--color-burgundy-900)] to-[var(--color-burgundy-800)]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_20%,_rgba(201,145,47,0.25),_transparent_55%)]" />
         <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
