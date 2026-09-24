@@ -13,6 +13,7 @@ export default async function AnnouncementsPage() {
     title_am: string;
     body_am: string;
     slug: string;
+    image_url: string | null;
     is_featured: boolean;
     published_at: string | null;
     created_at: string;
@@ -22,13 +23,13 @@ export default async function AnnouncementsPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("announcements")
-      .select("id, title_am, body_am, slug, is_featured, published_at, created_at")
+      .select("id, title_am, body_am, slug, image_url, is_featured, published_at, created_at")
       .eq("published", true)
       .order("published_at", { ascending: false })
       .limit(50);
     items = data ?? [];
   } catch {
-    // offline
+    // offline / missing column
   }
 
   return (
@@ -41,23 +42,37 @@ export default async function AnnouncementsPage() {
         የሰንበት ት/ቤቱ ኦፊሴላዊ ማስታወቂያዎችና ዜናዎች
       </p>
 
-      <ul className="mt-10 space-y-4">
+      <ul className="mt-10 space-y-5">
         {items.map((a) => (
-          <li key={a.id} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <h2 className="text-lg font-semibold amharic text-[var(--primary)]">{a.title_am}</h2>
-              {a.is_featured && (
-                <span className="text-xs rounded-full bg-[var(--color-gold-100)] text-[var(--color-gold-800)] px-2 py-0.5">
-                  በመነሻ
-                </span>
+          <li key={a.id}>
+            <Link
+              href={`/announcements/${a.slug}`}
+              className="block overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] transition hover:border-[var(--color-gold-400)]"
+            >
+              {a.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={a.image_url} alt="" className="h-48 w-full object-cover sm:h-56" />
               )}
-            </div>
-            <time className="text-xs text-[var(--foreground)]/50">
-              {new Date(a.published_at || a.created_at).toLocaleDateString("am-ET")}
-            </time>
-            <p className="mt-3 text-sm amharic leading-relaxed whitespace-pre-wrap text-[var(--foreground)]/80">
-              {a.body_am}
-            </p>
+              <div className="p-5 sm:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h2 className="text-lg font-semibold amharic text-[var(--primary)]">{a.title_am}</h2>
+                  {a.is_featured && (
+                    <span className="text-xs rounded-full bg-[var(--color-gold-100)] text-[var(--color-gold-800)] px-2 py-0.5">
+                      በመነሻ
+                    </span>
+                  )}
+                </div>
+                <time className="text-xs text-[var(--foreground)]/50">
+                  {new Date(a.published_at || a.created_at).toLocaleDateString("am-ET")}
+                </time>
+                <p className="mt-3 line-clamp-3 text-sm amharic leading-relaxed text-[var(--foreground)]/80">
+                  {a.body_am}
+                </p>
+                <span className="mt-3 inline-block text-xs font-semibold text-[var(--primary)] amharic">
+                  ሙሉ ይመልከቱ →
+                </span>
+              </div>
+            </Link>
           </li>
         ))}
         {items.length === 0 && (
