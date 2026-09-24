@@ -6,14 +6,14 @@ import { createClient } from "@/lib/supabase/client";
 import { ImagePlus, X } from "lucide-react";
 
 function toSlug(text: string) {
-  return (
+  const base =
     text
       .trim()
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^\w\u1200-\u137F-]/g, "")
-      .slice(0, 80) || `ann-${Date.now()}`
-  );
+      .slice(0, 60) || "ann";
+  return `${base}-${Date.now().toString(36)}`;
 }
 
 export function AnnouncementForm() {
@@ -27,6 +27,7 @@ export function AnnouncementForm() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -51,40 +52,81 @@ export function AnnouncementForm() {
     if (fileRef.current) fileRef.current.value = "";
   }
 
-  async function uploadImage(supabase: ReturnType<typeof createClient>, slug: string) {
-    if (!imageFile) return null;
+  async function uploadImage(
+    supabase: ReturnType<typeof createClient>,
+    slug: string
+  ): Promise<string> {
+    if (!imageFile) throw new Error("No file");
     const ext = imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${slug}-${Date.now()}.${ext}`;
+    const path = `${slug}.${ext}`;
+
     const { error: upErr } = await supabase.storage
       .from("announcement-images")
-      .upload(path, imageFile, { cacheControl: "3600", upsert: false });
-    if (upErr) throw new Error(upErr.message);
-    const { data } = supabase.storage.from("announcement-images").getPublicUrl(path);
+      .upload(path, imageFile, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: imageFile.type || "image/jpeg",
+      });
+
+    if (upErr) {
+      const msg = upErr.message || String(upErr);
+      if (/bucket|not found|does not exist/i.test(msg)) {
+        throw new Error(
+          "Bucket «announcement-images» የለም። በ Supabase → Storage ይፍጠሩ ወይም migration 014 ያሂዱ።"
+        );
+      }
+      if (/policy|row-level|permission|denied|403|401/i.test(msg)) {
+        throw new Error(
+          "ፈቃድ የለም። በ Supabase SQL Editor migration 014 ያሂዱ (authenticated upload policy)። · " +
+            msg
+        );
+      }
+      throw new Error(msg);
+    }
+
+    const { data } = supabase.storage
+      .from("announcement-images")
+      .getPublicUrl(path);
+    if (!data?.publicUrl) {
+      throw new Error("Public URL ማግኘት አልተቻለም። Bucket public መሆኑን ያረጋግጡ።");
+    }
     return data.publicUrl;
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!titleAm.trim() || !bodyAm.trim()) return;
     setSaving(true);
     setError(null);
+    setOk(null);
 
     const supabase = createClient();
     const slug = toSlug(titleAm);
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        setError("እባክዎ እንደገና ይግቡ (session አልተገኘም)።");
+        setSaving(false);
+        return;
+      }
+
       let image_url: string | null = null;
-      try {
-        image_url = await uploadImage(supabase, slug);
-      } catch (imgErr) {
-        console.warn("image upload failed", imgErr);
-        setError(
-          "ምስል መጫን አልተሳካም። Storage bucket (announcement-images) ያረጋግጡ። ጽሁፉ ብቻ ይቀመጣል።"
-        );
+      if (imageFile) {
+        try {
+          image_url = await uploadImage(supabase, slug);
+        } catch (imgErr) {
+          const detail =
+            imgErr instanceof Error ? imgErr.message : String(imgErr);
+          setError(`ምስል መጫን አልተሳካም፦ ${detail} — ጽሁፉ ብቻ ይቀመጣል።`);
+        }
       }
 
       const { error: err } = await supabase.from("announcements").insert({
-        title_am: titleAm,
-        body_am: bodyAm,
+        title_am: titleAm.trim(),
+        body_am: bodyAm.trim(),
         slug,
         published,
         is_featured: featured,
@@ -101,7 +143,15 @@ export function AnnouncementForm() {
       setTitleAm("");
       setBodyAm("");
       setFeatured(true);
+      setPublished(true);
       clearImage();
+      setOk(
+        image_url
+          ? "ወቅታዊ ጉዳይ + ምስል ተመዝግቧል"
+          : imageFile
+            ? "ጽሁፍ ተመዝግቧል (ምስል አልገባም)"
+            : "ወቅታዊ ጉዳይ ተመዝግቧል"
+      );
       router.refresh();
     } catch (ex) {
       setError(ex instanceof Error ? ex.message : "ስህተት ተከስቷል");
@@ -134,7 +184,9 @@ export function AnnouncementForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1 amharic">ምስል (አማራጭ)</label>
+        <label className="block text-sm font-medium mb-1 amharic">
+          ምስል (አማራጭ)
+        </label>
         <input
           ref={fileRef}
           type="file"
@@ -146,7 +198,11 @@ export function AnnouncementForm() {
         {imagePreview ? (
           <div className="relative overflow-hidden rounded-xl border border-[var(--border)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={imagePreview} alt="" className="h-40 w-full object-cover" />
+            <img
+              src={imagePreview}
+              alt=""
+              className="h-40 w-full object-cover"
+            />
             <button
               type="button"
               onClick={clearImage}
@@ -162,27 +218,44 @@ export function AnnouncementForm() {
             className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--border)] bg-[var(--muted)]/30 px-4 py-8 text-center transition hover:bg-[var(--muted)]/50"
           >
             <ImagePlus className="h-8 w-8 text-[var(--primary)]/60" />
-            <span className="text-sm amharic text-[var(--foreground)]/70">ምስል ይምረጡ</span>
-            <span className="text-[11px] text-[var(--foreground)]/45">JPEG · PNG · WebP · ከ5MB በታች</span>
+            <span className="text-sm amharic text-[var(--foreground)]/70">
+              ምስል ይምረጡ
+            </span>
+            <span className="text-[11px] text-[var(--foreground)]/45">
+              JPEG · PNG · WebP · ከ5MB በታች
+            </span>
           </label>
         )}
       </div>
 
       <div className="flex flex-wrap gap-4 text-sm amharic">
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={published}
+            onChange={(e) => setPublished(e.target.checked)}
+          />
           አትም (በድረ-ገጽ ይታይ)
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={featured}
+            onChange={(e) => setFeatured(e.target.checked)}
+          />
           በመነሻ ገጽ አሳይ
         </label>
       </div>
-      {error && <p className="text-sm text-red-600 amharic">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-600 amharic whitespace-pre-wrap">
+          {error}
+        </p>
+      )}
+      {ok && <p className="text-sm text-emerald-600 amharic">{ok}</p>}
       <button
         type="submit"
         disabled={saving}
-        className="rounded-xl bg-[var(--primary)] text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50 amharic"
+        className="w-full rounded-xl bg-[var(--primary)] text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50 amharic"
       >
         {saving ? "እየተቀመጠ…" : "ወቅታዊ ጉዳይ ፍጠር"}
       </button>
