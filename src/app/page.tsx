@@ -8,7 +8,7 @@ async function getAnnouncements(): Promise<HomeAnnouncement[]> {
     const supabase = await createClient();
     const { data } = await supabase
       .from("announcements")
-      .select("id, title_am, body_am, slug, is_featured, published_at, created_at")
+      .select("id, title_am, body_am, slug, image_url, is_featured, published_at, created_at")
       .eq("published", true)
       .order("is_featured", { ascending: false })
       .order("published_at", { ascending: false })
