@@ -7,10 +7,8 @@ import {
   Users,
   Church,
   Heart,
-  Sparkles,
   Building2,
   HandHeart,
-  Scale,
   ArrowRight,
   Calendar,
   Search,
@@ -74,17 +72,6 @@ const serviceTimes = [
   { day: "ዓርብ", time: "ማታ 5:00 – 7:00", note: "የወጣቶች ስብሰባ" },
 ];
 
-const quickGrid = [
-  { href: "/about", title: "ስለ እኛ", desc: "ታሪክና አመጣጥ", icon: Church },
-  { href: "/events", title: "ዝግጅቶች", desc: "መርሐግብርና በዓላት", icon: Sparkles },
-  { href: "/announcements", title: "ማስታወቂያ", desc: "አዳዲስ መረጃዎች", icon: Heart },
-  { href: "/programs", title: "መርሐግብራት", desc: "የሰንበት ት/ቤት", icon: BookOpen },
-  { href: "/departments", title: "ክፍሎች", desc: "አገልግሎት ክፍሎች", icon: Building2 },
-  { href: "/services", title: "አገልግሎቶች", desc: "ማመልከቻ", icon: HandHeart },
-  { href: "/contact", title: "ያግኙን", desc: "አድራሻና መልእክት", icon: Users },
-  { href: "/rules", title: "ሕግና ደንብ", desc: "ውስጥ መተዳደሪያ", icon: Scale },
-];
-
 export default function HomePage() {
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -122,7 +109,7 @@ export default function HomePage() {
 
         <motion.div
           style={{ y: iconFloat }}
-          className="absolute right-3 top-[max(5.5rem,env(safe-area-inset-top)+4.5rem)] z-20 sm:right-8 sm:top-28"
+          className="pointer-events-none absolute right-2 top-[max(4.75rem,env(safe-area-inset-top)+4rem)] z-20 sm:pointer-events-auto sm:right-8 sm:top-28"
           initial={{ opacity: 0, scale: 0.55, rotate: -8 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
           transition={{ type: "spring", stiffness: 90, damping: 14, delay: 0.35 }}
@@ -142,7 +129,7 @@ export default function HomePage() {
               <img
                 src={christIcon}
                 alt="ኢየሱስ ክርስቶስ"
-                className="h-[4.75rem] w-[4.75rem] object-cover object-top sm:h-28 sm:w-28"
+                className="h-14 w-14 object-cover object-top sm:h-28 sm:w-28"
               />
             </div>
           </motion.div>
@@ -150,7 +137,7 @@ export default function HomePage() {
 
         <motion.div
           style={{ opacity: heroOpacity, y: contentY }}
-          className="relative z-10 mx-auto flex min-h-[92svh] max-w-7xl flex-col justify-end px-4 pb-14 pt-16 sm:min-h-[85vh] sm:px-6 sm:pb-20 lg:px-8"
+          className="relative z-10 mx-auto flex min-h-[92svh] max-w-7xl flex-col justify-end px-4 pb-12 pt-14 sm:min-h-[85vh] sm:px-6 sm:pb-20 sm:pt-16 lg:px-8"
         >
           <FadeIn>
             <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
@@ -166,7 +153,7 @@ export default function HomePage() {
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-gold-300)] amharic sm:text-xs sm:tracking-[0.12em]">
                 {DOCUMENT_META.church_am}
               </p>
-              <h1 className="mt-2 max-w-[20ch] text-[1.85rem] font-bold leading-[1.25] text-white amharic drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] sm:max-w-xl sm:text-4xl sm:leading-tight lg:text-[2.75rem]">
+              <h1 className="mt-2 max-w-[18ch] pr-16 text-[1.65rem] font-bold leading-[1.28] text-white amharic drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] sm:max-w-xl sm:pr-0 sm:text-4xl sm:leading-tight lg:text-[2.75rem]">
                 {DOCUMENT_META.organization_am}
               </h1>
               <p className="mt-3 max-w-md text-[13px] leading-relaxed text-white/90 amharic sm:text-base">
@@ -178,7 +165,7 @@ export default function HomePage() {
             </div>
           </FadeIn>
 
-          <div className="mt-7 grid grid-cols-2 gap-3 sm:mt-9 sm:max-w-xl">
+          <div className="mt-6 grid grid-cols-2 gap-2.5 sm:mt-9 sm:max-w-xl sm:gap-3">
             {primaryActions.map((a, i) => {
               const Icon = a.icon;
               return (
@@ -200,8 +187,8 @@ export default function HomePage() {
                     color={a.tone === "primary" ? "primary" : "dark"}
                     className={
                       a.tone === "primary"
-                        ? "flex min-h-[3.75rem] items-center gap-3 rounded-2xl bg-white/95 px-3.5 py-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.28)] backdrop-blur-md border border-white/50 transition hover-lift sm:px-4"
-                        : "flex min-h-[3.75rem] items-center gap-3 rounded-2xl bg-[var(--color-gold-500)] px-3.5 py-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.28)] border border-[var(--color-gold-300)] transition hover-lift sm:px-4"
+                        ? "flex min-h-[3.5rem] items-center gap-2.5 rounded-2xl bg-white/95 px-3 py-3 sm:min-h-[3.75rem] sm:gap-3 sm:px-4 sm:py-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.28)] backdrop-blur-md border border-white/50 transition hover-lift"
+                        : "flex min-h-[3.5rem] items-center gap-2.5 rounded-2xl bg-[var(--color-gold-500)] px-3 py-3 sm:min-h-[3.75rem] sm:gap-3 sm:px-4 sm:py-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.28)] border border-[var(--color-gold-300)] transition hover-lift"
                     }
                   >
                     <span
@@ -247,13 +234,13 @@ export default function HomePage() {
 
       <section className="relative z-10 -mt-1 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-5 gap-2.5 sm:gap-3.5">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5 sm:gap-3.5">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ type: "spring", stiffness: 120, damping: 18 }}
-              className="col-span-3 relative h-40 overflow-hidden rounded-2xl border border-[var(--color-gold-300)]/35 shadow-lg sm:h-52 sm:rounded-3xl"
+              className="col-span-2 relative h-40 overflow-hidden rounded-2xl border border-[var(--color-gold-300)]/35 shadow-lg sm:col-span-3 sm:h-52 sm:rounded-3xl"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -277,7 +264,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ delay: 0.1, type: "spring", stiffness: 120, damping: 18 }}
-              className="col-span-2 relative h-40 overflow-hidden rounded-2xl border border-[var(--color-gold-400)]/45 shadow-lg sm:h-52 sm:rounded-3xl"
+              className="col-span-2 relative h-40 overflow-hidden rounded-2xl border border-[var(--color-gold-400)]/45 shadow-lg sm:col-span-2 sm:h-52 sm:rounded-3xl"
             >
               <div className="absolute inset-0 bg-[var(--color-burgundy-900)]" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -324,49 +311,6 @@ export default function HomePage() {
             );
           })}
         </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 sm:pt-10 lg:px-8">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold amharic text-[var(--foreground)] sm:text-lg">
-            ፈጣን አገናኞች
-          </h2>
-          <Link
-            href="/more"
-            className="flex items-center gap-0.5 text-xs font-semibold text-[var(--primary)] amharic"
-          >
-            ሁሉም <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-        <nav
-          aria-label="ፈጣን አገናኞች"
-          className="divide-y divide-[var(--border)] rounded-2xl border border-[var(--border)] bg-[var(--card)]/40"
-        >
-          {quickGrid.map((item) => {
-            const Icon = item.icon;
-            return (
-              <RippleLink
-                key={item.href}
-                href={item.href}
-                color="primary"
-                className="hover-row hover-icon flex items-center gap-3 px-3.5 py-3.5 sm:px-4 sm:py-3.5"
-              >
-                <span className="hover-icon-bubble flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)] transition-transform duration-200">
-                  <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold leading-tight amharic text-[var(--foreground)]">
-                    {item.title}
-                  </span>
-                  <span className="mt-0.5 block text-[12px] leading-snug text-[var(--foreground)]/50 amharic">
-                    {item.desc}
-                  </span>
-                </span>
-                <ChevronRight className="hover-chevron h-4 w-4 shrink-0 text-[var(--foreground)]/30 transition-transform duration-200" />
-              </RippleLink>
-            );
-          })}
-        </nav>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8">
@@ -510,7 +454,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.05, type: "spring", stiffness: 140, damping: 18 }}
-              className="w-[72%] shrink-0 snap-start sm:w-auto"
+              className="w-[78%] max-w-[280px] shrink-0 snap-start sm:w-auto sm:max-w-none"
             >
               <RippleLink
                 href={`/departments/${d.slug}`}
