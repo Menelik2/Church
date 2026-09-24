@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth/require-admin";
-import { getWorkspace } from "@/data/department-workspaces";
+import { getWorkspace, DEPARTMENT_WORKSPACES } from "@/data/department-workspaces";
 import { createClient } from "@/lib/supabase/server";
 import { TaskPanel } from "@/components/workspace/TaskPanel";
 import { FinancePanel } from "@/components/workspace/FinancePanel";
@@ -19,7 +19,14 @@ import { ArtsPanel } from "@/components/workspace/ArtsPanel";
 import { DeptDisciplinePanel } from "@/components/workspace/DeptDisciplinePanel";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
+/** Always render on the server at request time — never statically collect this route. */
 export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+
+/** Prevent Next.js from trying to pre-render unknown slugs at build time. */
+export function generateStaticParams() {
+  return DEPARTMENT_WORKSPACES.map((d) => ({ slug: d.code }));
+}
 
 /** Accept a pre-built Postgrest filter builder (thenable). */
 async function selectRows<T = Record<string, unknown>>(
