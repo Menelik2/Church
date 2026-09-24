@@ -20,16 +20,31 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
+function isSectionHeading(line: string) {
+  return (
+    /በተመለከተ\s*፡?-?\s*$/.test(line) ||
+    /፡-\s*$/.test(line) ||
+    /የክፍያ ዋጋ፦\s*$/.test(line) ||
+    (/^[ሀ-ፖ].{2,40}$/.test(line) && line.endsWith(":"))
+  );
+}
+
 function renderBody(content: string) {
   const lines = content.split(/\n+/).map((l) => l.trim()).filter(Boolean);
   const blocks: { type: "p" | "li" | "h"; text: string }[] = [];
 
   for (const line of lines) {
-    if (/^(\d+\.\d*|\d+\.|[•●◆▪◦·\-–—])\s*/.test(line) || /^\d+\.\d+/.test(line)) {
-      blocks.push({ type: "li", text: line.replace(/^[•●◆▪◦·\-–—]\s*/, "").trim() });
-    } else if (/^\d+\.\s+[^\d]/.test(line) && line.length < 80) {
-      blocks.push({ type: "h", text: line });
-    } else if (/^\d+\.\d+\./.test(line) || /^[0-9]+\.[0-9]/.test(line)) {
+    if (isSectionHeading(line)) {
+      blocks.push({ type: "h", text: line.replace(/፡-?\s*$/, "").replace(/፦\s*$/, "").trim() });
+    } else if (
+      /^(\d+[\.\)]|\d+\.\d*|[•●◆▪◦·\-–—➢*])\s*/.test(line) ||
+      /^[ሀ-መ]\.\s/.test(line)
+    ) {
+      blocks.push({
+        type: "li",
+        text: line.replace(/^[•●◆▪◦·\-–—➢*]\s*/, "").trim(),
+      });
+    } else if (/^\d+\.\s+[^\d]/.test(line) && line.length < 90) {
       blocks.push({ type: "h", text: line });
     } else {
       blocks.push({ type: "p", text: line });
@@ -62,7 +77,10 @@ function renderBody(content: string) {
     flushList(`l-${i}`);
     if (b.type === "h") {
       elements.push(
-        <h3 key={`h-${i}`} className="mt-8 mb-2 text-base font-bold amharic text-[var(--primary)] first:mt-0">
+        <h3
+          key={`h-${i}`}
+          className="mt-8 mb-3 flex items-center gap-2 text-base font-bold amharic text-[var(--primary)] first:mt-0 border-b border-[var(--border)] pb-2"
+        >
           {b.text}
         </h3>
       );
@@ -90,7 +108,7 @@ export default async function ArticlePage({ params }: Props) {
   const all = nums.map((n) => ARTICLES[String(n)]).filter(Boolean);
 
   return (
-    <div className="bg-cross-pattern min-h-screen pb-28 lg:pb-12">
+    <div className="bg-cross-pattern min-h-screen pb-28 md:pb-12">
       <div className="border-b border-[var(--border)] bg-[var(--card)]/90 backdrop-blur sticky top-0 z-30">
         <div className="mx-auto flex h-12 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <nav className="flex min-w-0 items-center gap-1.5 text-xs text-[var(--foreground)]/50 amharic">
@@ -104,7 +122,10 @@ export default async function ArticlePage({ params }: Props) {
             <span>/</span>
             <span className="truncate text-[var(--foreground)]">አንቀጽ {art.number}</span>
           </nav>
-          <Link href="/rules" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[var(--primary)] amharic">
+          <Link
+            href="/rules"
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[var(--primary)] amharic"
+          >
             <List className="h-3.5 w-3.5" />
             ሁሉም
           </Link>
