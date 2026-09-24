@@ -5,30 +5,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { churchFront } from "@/data/church-photos";
 import { DOCUMENT_META } from "@/data/regulations";
 
-const STORAGE_KEY = "mk_intro_seen_v1";
 const AUTO_MS = 4200;
 
 export function SiteIntroFlash() {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [phase, setPhase] = useState(0); // 0 cross, 1 titles, 2 ready to exit
 
   const dismiss = useCallback(() => {
     setVisible(false);
-    try {
-      sessionStorage.setItem(STORAGE_KEY, "1");
-    } catch {
-      /* ignore */
-    }
   }, []);
 
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem(STORAGE_KEY)) return;
-    } catch {
-      /* show anyway */
-    }
+    // Always show intro on every load / refresh
     setVisible(true);
-    // lock scroll while intro is up
+    setPhase(0);
+
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -81,7 +72,6 @@ export function SiteIntroFlash() {
 
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center px-6 text-center max-w-lg">
-            {/* Cross / emblem */}
             <motion.div
               initial={{ opacity: 0, scale: 0.4, rotate: -12 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -99,7 +89,6 @@ export function SiteIntroFlash() {
                 fill="currentColor"
                 aria-hidden
               >
-                {/* Ethiopian-style cross simplified */}
                 <rect x="28" y="4" width="8" height="72" rx="1" />
                 <rect x="10" y="22" width="44" height="8" rx="1" />
                 <rect x="18" y="38" width="28" height="6" rx="1" />
@@ -107,7 +96,6 @@ export function SiteIntroFlash() {
               </svg>
             </motion.div>
 
-            {/* Amharic title */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={phase >= 1 ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
@@ -121,7 +109,6 @@ export function SiteIntroFlash() {
               </h1>
             </motion.div>
 
-            {/* English translation */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={phase >= 1 ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
@@ -139,7 +126,6 @@ export function SiteIntroFlash() {
               </p>
             </motion.div>
 
-            {/* Divider line */}
             <motion.div
               className="mt-6 h-px w-16 bg-gradient-to-r from-transparent via-[var(--color-gold-400)] to-transparent"
               initial={{ scaleX: 0, opacity: 0 }}
@@ -147,7 +133,6 @@ export function SiteIntroFlash() {
               transition={{ duration: 0.8, delay: 0.3 }}
             />
 
-            {/* Bilingual tagline */}
             <motion.p
               className="mt-5 text-xs text-white/75 amharic sm:text-sm"
               initial={{ opacity: 0 }}
@@ -157,7 +142,6 @@ export function SiteIntroFlash() {
               እንኳን ደህና መጡ · Welcome
             </motion.p>
 
-            {/* Skip */}
             <motion.button
               type="button"
               onClick={(e) => {
@@ -173,7 +157,6 @@ export function SiteIntroFlash() {
             </motion.button>
           </div>
 
-          {/* Bottom progress bar */}
           <motion.div
             className="absolute bottom-0 left-0 right-0 h-0.5 origin-left bg-[var(--color-gold-400)]"
             initial={{ scaleX: 0 }}
