@@ -4,15 +4,30 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
+/** Exact Article 14 criteria (1–9) */
 const criteria = [
-  { key: "is_orthodox", label: "የኢትዮጵያ ኦርጦዶክስ ተዋሕዶ ሃይማኖት ተከታይ ነኝ" },
-  { key: "completed_course", label: "የተከታታይ ትምሕርት (ኮርስ) አጠናቄያለሁ / እየተማርኩ ነኝ" },
-  { key: "accepts_doctrine", label: "ዶግማ፣ ቀኖና እና ስርዓት ለመጠበቅ ፈቃደኛ ነኝ" },
-  { key: "respects_bylaws", label: "የውስጥ መተዳደሪያ ደንብ አከብራለሁ" },
-  { key: "proper_attire", label: "ስርዓተ ቤተ ክርስቲያን የጠበቀ አለባበስ እከተላለሁ" },
-  { key: "has_confessor", label: "የንስያ አባት አለኝና በንስያ ህይወት እመላለሳለሁ" },
-  { key: "will_pay_monthly", label: "ወርሃዊ መዋጆ ለማዋጣት ዝግጅ ነኝ" },
-  { key: "church_marriage", label: "ጋብቻዬ በስርዓተ ቤተ ክርስቲያን ነው (ወይም አይመለከተኝም)" },
+  { key: "is_orthodox", label: "1. የኢትዮጵያ ኦርቶዶክስ ተዋሕዶ ሃይማኖት ተከታይ የሆንኩ" },
+  {
+    key: "completed_course",
+    label: "2. በሰንበት ት/ቤቱ የሚሰጠውን የተከታታይ ትምህርት (ኮርስ) ስልጠና በአግባቡ ተምሬ ያጠናቀቅኩ / የተመረቅኩ",
+  },
+  {
+    key: "accepts_doctrine",
+    label: "3. የቤ/ክርስትያንን ድግማ፣ ቀኖና እና ሥርዓት ለመጠበቅና ለመፈጸም ፈቃደኛ የሆንኩ",
+  },
+  { key: "respects_bylaws", label: "4. የሰንበት ትምህርት ቤቱን የውስጥ መተዳደሪያ ድንብ የማከብር" },
+  { key: "proper_attire", label: "5. ሥርዓተ ቤ/ያንን የጠበቀ አለበባስ የምከተል" },
+  { key: "has_confessor", label: "6. የንስኃ አባት ያለኝና በንስኃ ህይወት የምመላለስ" },
+  { key: "will_pay_monthly", label: "7. ወርሐዊ መዋጮ የማዋጣ" },
+  {
+    key: "stage_ready",
+    label: "8. የመድረክ አገልግሎት (ትምህርት / ኪነጥበብ / መዝሙር) መስጠት የምችል — ከታች ይምረጡ",
+  },
+  {
+    key: "church_marriage",
+    label:
+      "9. ጋብቻዬ በሥርዓተ ቤ/ክርስትያን (ተክሉል / መዓስባን) ነው — ወይም ከውጭ ከሆነ አሁን በንስኃና ቁርባን ህይወት እመላለሳለሁ / አይመለከተኝም",
+  },
 ] as const;
 
 export default function MembershipApplicationPage() {
@@ -26,13 +41,19 @@ export default function MembershipApplicationPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
 
+  const checkedCount = criteria.filter((c) => checks[c.key]).length;
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!stage) {
+      setErr("የመድረክ አገልግሎት (ትምህርት / ኪነጥበብ / መዝሙር) መምረጥ ያስፈልጋል።");
+      return;
+    }
     setStatus("loading");
     setErr(null);
     try {
       const supabase = createClient();
-      const { error } = await supabase.from("membership_applications").insert({
+      const payload = {
         full_name_am: name.trim(),
         phone: phone.trim() || null,
         email: email.trim() || null,
@@ -47,20 +68,38 @@ export default function MembershipApplicationPage() {
         church_marriage: !!checks.church_marriage,
         preferred_stage: stage || null,
         message: message.trim() || null,
-        status: "pending",
-      });
+        status: "pending" as const,
+      };
+      const { data: inserted, error } = await supabase
+        .from("membership_applications")
+        .insert(payload)
+        .select("id")
+        .single();
+
       if (error) {
         setStatus("error");
         setErr(error.message);
         return;
       }
+
+      // Notify admin inbox (best-effort)
+      if (inserted?.id) {
+        await supabase.from("membership_notifications").insert({
+          application_id: inserted.id,
+          kind: "application_submitted",
+          title_am: `አዲስ የአባልነት ጥያቄ — ${name.trim()}`,
+          body_am: `መመዘኛ ራስ-ማረጋገጫ: ${checkedCount}/9 · መድረክ: ${stage}`,
+          recipient_name: name.trim(),
+          recipient_phone: phone.trim() || null,
+          recipient_email: email.trim() || null,
+        });
+      }
+
       setStatus("ok");
     } catch (e) {
       setStatus("error");
       setErr(
-        e instanceof Error
-          ? e.message
-          : "ጥያቄውን መላክ አልተሳካም። እንደገና ይሞክሩ።"
+        e instanceof Error ? e.message : "ጥያቄውን መላክ አልተሳካም። እንደገና ይሞክሩ።"
       );
     }
   }
@@ -68,62 +107,147 @@ export default function MembershipApplicationPage() {
   if (status === "ok") {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <p className="amharic text-lg font-medium text-emerald-700">ጥያቄዎ ተልኩል። አስተዳዳሪዎች ይመረምራሉ።</p>
-        <Link href="/services" className="mt-4 inline-block text-[var(--primary)] hover:underline">← ተመለስ</Link>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 p-8">
+          <p className="amharic text-lg font-semibold text-emerald-800 dark:text-emerald-200">
+            ጥያቄዎ ተልኳል።
+          </p>
+          <p className="mt-2 text-sm text-emerald-700/80 amharic">
+            ቁጥጥር ክፍልና ሥራ አስፈጻሚ መመዘኛዎቹን ያረጋግጡና ውሳኔ ይሰጣሉ።
+          </p>
+        </div>
+        <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm">
+          <Link href="/rules/14" className="text-[var(--primary)] hover:underline">
+            አንቀጽ 14
+          </Link>
+          <Link href="/services" className="text-[var(--foreground)]/60 hover:underline">
+            ← አገልግሎቶች
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-16 sm:px-6">
-      <h1 className="text-2xl font-bold text-[var(--primary)] amharic">የቋሚ አባልነት / አገልጋይነት ጥያቄ</h1>
-      <p className="mt-2 text-sm text-[var(--foreground)]/60 amharic">አንቀጽ 14 — መመዘኛ መስፈርቶች</p>
-      <Link href="/rules/14" className="text-sm text-[var(--primary)] hover:underline">ሙሉ አንቀጽ 14 →</Link>
+    <div className="mx-auto max-w-lg px-4 py-12 sm:px-6 sm:py-16">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--primary)]">
+        አንቀጽ 14
+      </p>
+      <h1 className="mt-1 text-2xl font-bold text-[var(--primary)] amharic sm:text-3xl">
+        የቋሚ አባልነት / አገልጋይነት ጥያቄ
+      </h1>
+      <p className="mt-2 text-sm text-[var(--foreground)]/60 amharic leading-relaxed">
+        እነዚህን መስፈርቶች የሚያሟላ ብቻ አገልጋይ / ቋሚ አባል ይሆናል። ሙሉ ጽሑፍን ከአንቀጽ 14 ያንብቡ።
+      </p>
+      <Link
+        href="/rules/14"
+        className="mt-2 inline-block text-sm font-medium text-[var(--primary)] hover:underline"
+      >
+        ሙሉ አንቀጽ 14 →
+      </Link>
+
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">ሙሉ ስም *</label>
-          <input required value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm amharic" />
+          <label className="block text-sm font-medium mb-1 amharic">ሙሉ ስም *</label>
+          <input
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm amharic focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-500)]"
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium mb-1">ስልክ</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm" />
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-500)]"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">ዕድሜ</label>
-            <input type="number" min={10} value={age} onChange={(e) => setAge(e.target.value)} className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm" />
+            <input
+              type="number"
+              min={10}
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-500)]"
+            />
           </div>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">ኢሜይል</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm" />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-500)]"
+          />
         </div>
-        <fieldset className="rounded-xl border border-[var(--border)] p-4 space-y-2">
-          <legend className="text-sm font-semibold amharic px-1">መመዘኛ (አንቀጽ 14)</legend>
+
+        <fieldset className="rounded-2xl border border-[var(--border)] p-4 space-y-3">
+          <legend className="text-sm font-semibold amharic px-1">
+            መመዘኛ መስፈርቶች ({checkedCount}/9)
+          </legend>
           {criteria.map((c) => (
-            <label key={c.key} className="flex gap-2 text-sm amharic items-start">
-              <input type="checkbox" className="mt-1" checked={!!checks[c.key]} onChange={(e) => setChecks((prev) => ({ ...prev, [c.key]: e.target.checked }))} />
+            <label key={c.key} className="flex gap-2.5 text-sm amharic items-start leading-snug">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--border)]"
+                checked={!!checks[c.key]}
+                onChange={(e) =>
+                  setChecks((prev) => ({ ...prev, [c.key]: e.target.checked }))
+                }
+              />
               <span>{c.label}</span>
             </label>
           ))}
         </fieldset>
+
         <div>
-          <label className="block text-sm font-medium mb-1">የመድረክ አገልግሎት</label>
-          <select value={stage} onChange={(e) => setStage(e.target.value)} className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm">
+          <label className="block text-sm font-medium mb-1 amharic">
+            የመድረክ አገልግሎት * (አንቀጽ 14 ነጥብ 8)
+          </label>
+          <select
+            required
+            value={stage}
+            onChange={(e) => setStage(e.target.value)}
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-500)]"
+          >
             <option value="">— ይምረጡ —</option>
-            <option value="timihirt">ትምሕርት</option>
-            <option value="kine-tibeb">ኪነ ጥበብ</option>
+            <option value="timihirt">ትምህርት</option>
+            <option value="kine-tibeb">ኪነጥበብ</option>
             <option value="mezmur">መዝሙር</option>
           </select>
         </div>
+
         <div>
-          <label className="block text-sm font-medium mb-1">መልእክት</label>
-          <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={3} className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm amharic" />
+          <label className="block text-sm font-medium mb-1">ተጨማሪ መልእክት</label>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={3}
+            placeholder="ለምሳሌ፦ ከአገልግሎት ተገድጄ ነበር አሁን መስፈርቶችን አሟልቻለሁ…"
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm amharic focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-500)]"
+          />
         </div>
-        {err && <p className="text-sm text-red-600">{err}</p>}
-        <button type="submit" disabled={status === "loading"} className="w-full rounded-xl bg-[var(--primary)] text-white py-2.5 text-sm font-medium disabled:opacity-50">
+
+        {err && (
+          <p className="text-sm text-red-600 bg-red-50 dark:bg-red-950/30 rounded-lg px-3 py-2">
+            {err}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={status === "loading"}
+          className="w-full rounded-xl bg-[var(--primary)] text-white py-3 text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition"
+        >
           {status === "loading" ? "በመላክ ላይ…" : "ጥያቄ ላክ"}
         </button>
+        <p className="text-xs text-center text-[var(--foreground)]/50 amharic">
+          ማሳሰቢያ፦ ከአገልግሎት የተገደ ሰው መስፈርቶችን ካሟላ ቁጥጥር ክፍል ካረጋገጠ ሥራ አስፈጻሚ ወደ አገልጋይነት ሊመልስ ይችላል።
+        </p>
       </form>
     </div>
   );
