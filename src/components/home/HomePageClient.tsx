@@ -151,7 +151,7 @@ export function HomePageClient({
               </div>
             </motion.div>
           </div>
-          <p className="mt-3 text-center text-[10px] tracking-wide text-[var(--foreground)]/40 amharic sm:text-[11px]">ኢትዮጵያ ኦርጦዶክስ ተዋሕዶ ቤተ ክርስቲያን · ባሕር ዳር ሀገረ ስብከት</p>
+          <p className="mt-3 text-center text-[10px] tracking-wide text-[var(--foreground)]/40 amharic sm:text-[11px]">ኢትዮጵያ ኦርቶዶክስ ተዋሕዶ ቤተ ክርስቲያን · ባሕር ዳር ሀገረ ስብከት</p>
         </div>
       </section>
 
