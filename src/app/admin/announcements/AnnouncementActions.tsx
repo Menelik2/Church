@@ -2,61 +2,36 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { formatAppError } from "@/lib/supabase/safe-count";
 
 export function AnnouncementActions({
   id,
   published,
   featured,
+  onEdit,
 }: {
   id: string;
   published: boolean;
   featured: boolean;
+  onEdit?: () => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  async function togglePublish() {
+  async function patch(body: Record<string, unknown>) {
     setBusy(true);
     setErr(null);
     try {
-      const supabase = createClient();
-      const next = !published;
-      const { error } = await supabase
-        .from("announcements")
-        .update({
-          published: next,
-          published_at: next ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-      if (error) throw error;
+      const res = await fetch("/api/admin/announcements", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...body }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Update failed");
       router.refresh();
     } catch (e) {
-      setErr(formatAppError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function toggleFeatured() {
-    setBusy(true);
-    setErr(null);
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("announcements")
-        .update({
-          is_featured: !featured,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-      if (error) throw error;
-      router.refresh();
-    } catch (e) {
-      setErr(formatAppError(e));
+      setErr(e instanceof Error ? e.message : "ስህተት");
     } finally {
       setBusy(false);
     }
@@ -67,15 +42,15 @@ export function AnnouncementActions({
     setBusy(true);
     setErr(null);
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("announcements")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
+      const res = await fetch(
+        `/api/admin/announcements?id=${encodeURIComponent(id)}`,
+        { method: "DELETE" }
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Delete failed");
       router.refresh();
     } catch (e) {
-      setErr(formatAppError(e));
+      setErr(e instanceof Error ? e.message : "ስህተት");
     } finally {
       setBusy(false);
     }
@@ -83,10 +58,20 @@ export function AnnouncementActions({
 
   return (
     <div className="mt-2 flex flex-wrap items-center gap-2">
+      {onEdit && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onEdit}
+          className="rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] px-2 py-1 text-[11px] font-medium amharic hover:bg-[var(--primary)]/20 disabled:opacity-50"
+        >
+          አርትዕ
+        </button>
+      )}
       <button
         type="button"
         disabled={busy}
-        onClick={togglePublish}
+        onClick={() => patch({ published: !published })}
         className="rounded-lg border border-[var(--border)] px-2 py-1 text-[11px] font-medium amharic hover:bg-[var(--muted)] disabled:opacity-50"
       >
         {published ? "ደብቅ" : "አትም"}
@@ -94,7 +79,7 @@ export function AnnouncementActions({
       <button
         type="button"
         disabled={busy}
-        onClick={toggleFeatured}
+        onClick={() => patch({ is_featured: !featured })}
         className="rounded-lg border border-[var(--border)] px-2 py-1 text-[11px] font-medium amharic hover:bg-[var(--muted)] disabled:opacity-50"
       >
         {featured ? "ከመነሻ አስወግድ" : "በመነሻ አሳይ"}
