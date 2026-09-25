@@ -45,6 +45,10 @@ export default function MembershipApplicationPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!name.trim()) {
+      setErr("ሙሉ ስም ያስፈልጋል።");
+      return;
+    }
     if (!stage) {
       setErr("የመድረክ አገልግሎት (ትምህርት / ኪነጥበብ / መዝሙር) መምረጥ ያስፈልጋል።");
       return;
@@ -70,29 +74,36 @@ export default function MembershipApplicationPage() {
         message: message.trim() || null,
         status: "pending" as const,
       };
-      const { data: inserted, error } = await supabase
-        .from("membership_applications")
-        .insert(payload)
-        .select("id")
-        .single();
+
+      // Insert without .select() first — avoids RLS failure on RETURNING
+      // when SELECT policy was missing for anon.
+      const { error } = await supabase.from("membership_applications").insert(payload);
 
       if (error) {
         setStatus("error");
-        setErr(error.message);
+        const msg = error.message || "";
+        if (/row-level security|RLS|policy/i.test(msg)) {
+          setErr(
+            "ጥያቄውን ማስቀመጥ አልተቻለም (ደህንነት ፖሊሲ)። እባክዎ ገጹን አድስ አድርገው እንደገና ይሞክሩ። ችግሩ ከቀጠለ አስተዳዳሪን ያነጋግሩ።"
+          );
+        } else {
+          setErr(msg || "ጥያቄውን መላክ አልተሳካም።");
+        }
         return;
       }
 
-      // Notify admin inbox (best-effort)
-      if (inserted?.id) {
+      // Best-effort admin notification (no application_id required)
+      try {
         await supabase.from("membership_notifications").insert({
-          application_id: inserted.id,
           kind: "application_submitted",
           title_am: `አዲስ የአባልነት ጥያቄ — ${name.trim()}`,
-          body_am: `መመዘኛ ራስ-ማረጋገጫ: ${checkedCount}/9 · መድረክ: ${stage}`,
+          body_am: `መመዘኛ ራስ-ማረጋገጫ: ${checkedCount}/9 · መድረክ: ${stage}${phone.trim() ? ` · ስልክ: ${phone.trim()}` : ""}`,
           recipient_name: name.trim(),
           recipient_phone: phone.trim() || null,
           recipient_email: email.trim() || null,
         });
+      } catch {
+        // non-blocking
       }
 
       setStatus("ok");
