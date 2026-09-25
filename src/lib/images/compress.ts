@@ -5,15 +5,14 @@
  */
 
 export const IMAGE_LIMITS = {
-  maxInputBytes: 8 * 1024 * 1024, // accept up to 8MB before compress
-  maxOutputBytes: 900 * 1024, // target under ~900KB
+  maxInputBytes: 8 * 1024 * 1024,
+  maxOutputBytes: 900 * 1024,
   maxWidth: 1600,
   maxHeight: 1600,
   quality: 0.82,
   mime: "image/jpeg" as const,
 };
 
-/** Client-side compression via Canvas (works in browser only). */
 export async function compressImageClient(
   file: File,
   opts?: {
@@ -32,7 +31,6 @@ export async function compressImageClient(
   let quality = opts?.quality ?? IMAGE_LIMITS.quality;
   const maxOutputBytes = opts?.maxOutputBytes ?? IMAGE_LIMITS.maxOutputBytes;
 
-  // GIF: skip heavy re-encode to preserve animation when small
   if (file.type === "image/gif" && file.size < 1.5 * 1024 * 1024) {
     return file;
   }
@@ -57,19 +55,13 @@ export async function compressImageClient(
       );
 
     let blob = await toBlob(quality);
-    // Step down quality if still too large
     while (blob && blob.size > maxOutputBytes && quality > 0.45) {
       quality -= 0.1;
       blob = await toBlob(quality);
     }
 
-    if (!blob) {
-      return file;
-    }
-
-    if (blob.size >= file.size && file.size <= maxOutputBytes) {
-      return file;
-    }
+    if (!blob) return file;
+    if (blob.size >= file.size && file.size <= maxOutputBytes) return file;
 
     const name = file.name.replace(/\.\w+$/, "") + ".jpg";
     return new File([blob], name, {
@@ -91,10 +83,6 @@ export type ServerCompressResult = {
   compressedBytes: number;
 };
 
-/**
- * Server-side compression with sharp (optional dependency).
- * Falls back to original buffer if sharp is missing.
- */
 export async function compressImageServer(
   input: Buffer,
   originalType?: string
