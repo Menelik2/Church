@@ -4,9 +4,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
-  // Do NOT set output: "standalone" on Vercel — that is for Docker self-host only
   poweredByHeader: false,
   compress: true,
+  serverExternalPackages: ["sharp"],
   experimental: {
     optimizePackageImports: ["lucide-react", "date-fns", "framer-motion"],
   },
