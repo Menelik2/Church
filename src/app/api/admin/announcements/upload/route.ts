@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   compressImageServer,
   IMAGE_LIMITS,
-} from "@/lib/images/compress";
+} from "@/lib/images/compress-server";
 
 export const runtime = "nodejs";
 
