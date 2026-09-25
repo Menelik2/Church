@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  compressImageServer,
+  IMAGE_LIMITS,
+} from "@/lib/images/compress";
 
 export const runtime = "nodejs";
 
-const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = new Set([
   "image/jpeg",
   "image/png",
@@ -34,9 +37,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "ፋይል አልተገኘም" }, { status: 400 });
     }
 
-    if (file.size > MAX_BYTES) {
+    if (file.size > IMAGE_LIMITS.maxInputBytes) {
       return NextResponse.json(
-        { error: "ምስሉ ከ 5MB በታች መሆን አለበት።" },
+        {
+          error: `ምስሉ ከ ${Math.round(IMAGE_LIMITS.maxInputBytes / 1024 / 1024)}MB በታች መሆን አለበት።`,
+        },
         { status: 400 }
       );
     }
@@ -49,20 +54,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const ext =
-      file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
-      "jpg";
+    const raw = Buffer.from(await file.arrayBuffer());
+
+    // --- Image compression middleware ---
+    const compressed = await compressImageServer(raw, type || undefined);
+
     const path = `ann-${Date.now().toString(36)}-${Math.random()
       .toString(36)
-      .slice(2, 8)}.${ext}`;
-
-    const buffer = Buffer.from(await file.arrayBuffer());
+      .slice(2, 8)}.${compressed.ext}`;
 
     const { error: upErr } = await supabase.storage
       .from("announcement-images")
-      .upload(path, buffer, {
-        contentType: type || "image/jpeg",
-        cacheControl: "3600",
+      .upload(path, compressed.buffer, {
+        contentType: compressed.contentType,
+        cacheControl: "31536000",
         upsert: true,
       });
 
@@ -91,7 +96,23 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ url: data.publicUrl, path });
+    const ratio =
+      compressed.originalBytes > 0
+        ? Math.round(
+            (1 - compressed.compressedBytes / compressed.originalBytes) * 100
+          )
+        : 0;
+
+    return NextResponse.json({
+      url: data.publicUrl,
+      path,
+      contentType: compressed.contentType,
+      width: compressed.width,
+      height: compressed.height,
+      originalBytes: compressed.originalBytes,
+      compressedBytes: compressed.compressedBytes,
+      savedPercent: Math.max(0, ratio),
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Upload failed";
     return NextResponse.json({ error: message }, { status: 500 });
