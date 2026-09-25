@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
-import { compressImageClient } from "@/lib/images/compress";
+import { compressImageClient } from "@/lib/images/compress-client";
 
 export type AnnouncementEdit = {
   id: string;
@@ -77,7 +77,6 @@ export function AnnouncementForm({ edit = null, onDone }: Props) {
   }
 
   async function uploadViaApi(file: File): Promise<string> {
-    // Client-side compression middleware (canvas) before network
     let toSend = file;
     try {
       toSend = await compressImageClient(file);
