@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
+import { compressImageClient } from "@/lib/images/compress";
 
 export type AnnouncementEdit = {
   id: string;
@@ -51,8 +52,8 @@ export function AnnouncementForm({ edit = null, onDone }: Props) {
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError("ምስሉ ከ 5MB በታች መሆን አለበት።");
+    if (file.size > 8 * 1024 * 1024) {
+      setError("ምስሉ ከ 8MB በታች መሆን አለበት (ከመጫን በፊት ይጨመቃል)።");
       return;
     }
     if (!file.type.startsWith("image/")) {
@@ -76,8 +77,16 @@ export function AnnouncementForm({ edit = null, onDone }: Props) {
   }
 
   async function uploadViaApi(file: File): Promise<string> {
+    // Client-side compression middleware (canvas) before network
+    let toSend = file;
+    try {
+      toSend = await compressImageClient(file);
+    } catch {
+      toSend = file;
+    }
+
     const fd = new FormData();
-    fd.append("file", file);
+    fd.append("file", toSend);
     const res = await fetch("/api/admin/announcements/upload", {
       method: "POST",
       body: fd,
@@ -243,7 +252,7 @@ export function AnnouncementForm({ edit = null, onDone }: Props) {
               ምስል ይምረጡ
             </span>
             <span className="text-[11px] text-[var(--foreground)]/45">
-              JPEG · PNG · WebP · ከ5MB በታች
+              JPEG · PNG · WebP · ከ8MB (ይጨመቃል)
             </span>
           </label>
         )}
