@@ -1,33 +1,52 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { ImagePlus, X } from "lucide-react";
 
-function toSlug(text: string) {
-  const base =
-    text
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w\u1200-\u137F-]/g, "")
-      .slice(0, 60) || "ann";
-  return `${base}-${Date.now().toString(36)}`;
-}
+export type AnnouncementEdit = {
+  id: string;
+  title_am: string;
+  body_am: string;
+  published: boolean;
+  is_featured: boolean;
+  image_url: string | null;
+};
 
-export function AnnouncementForm() {
+type Props = {
+  edit?: AnnouncementEdit | null;
+  onDone?: () => void;
+};
+
+export function AnnouncementForm({ edit = null, onDone }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [titleAm, setTitleAm] = useState("");
-  const [bodyAm, setBodyAm] = useState("");
-  const [published, setPublished] = useState(true);
-  const [featured, setFeatured] = useState(true);
+  const [titleAm, setTitleAm] = useState(edit?.title_am ?? "");
+  const [bodyAm, setBodyAm] = useState(edit?.body_am ?? "");
+  const [published, setPublished] = useState(edit?.published ?? true);
+  const [featured, setFeatured] = useState(edit?.is_featured ?? true);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    edit?.image_url ?? null
+  );
+  const [removeImage, setRemoveImage] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (edit) {
+      setTitleAm(edit.title_am);
+      setBodyAm(edit.body_am);
+      setPublished(edit.published);
+      setFeatured(edit.is_featured);
+      setImagePreview(edit.image_url);
+      setImageFile(null);
+      setRemoveImage(false);
+      setError(null);
+      setOk(null);
+    }
+  }, [edit]);
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -41,56 +60,34 @@ export function AnnouncementForm() {
       return;
     }
     setError(null);
+    setRemoveImage(false);
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   }
 
   function clearImage() {
     setImageFile(null);
-    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    if (imagePreview && imagePreview.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
+    }
     setImagePreview(null);
+    setRemoveImage(true);
     if (fileRef.current) fileRef.current.value = "";
   }
 
-  async function uploadImage(
-    supabase: ReturnType<typeof createClient>,
-    slug: string
-  ): Promise<string> {
-    if (!imageFile) throw new Error("No file");
-    const ext = imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${slug}.${ext}`;
-
-    const { error: upErr } = await supabase.storage
-      .from("announcement-images")
-      .upload(path, imageFile, {
-        cacheControl: "3600",
-        upsert: true,
-        contentType: imageFile.type || "image/jpeg",
-      });
-
-    if (upErr) {
-      const msg = upErr.message || String(upErr);
-      if (/bucket|not found|does not exist/i.test(msg)) {
-        throw new Error(
-          "Bucket «announcement-images» የለም። በ Supabase → Storage ይፍጠሩ ወይም migration 014 ያሂዱ።"
-        );
-      }
-      if (/policy|row-level|permission|denied|403|401/i.test(msg)) {
-        throw new Error(
-          "ፈቃድ የለም። በ Supabase SQL Editor migration 014 ያሂዱ (authenticated upload policy)። · " +
-            msg
-        );
-      }
-      throw new Error(msg);
+  async function uploadViaApi(file: File): Promise<string> {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/admin/announcements/upload", {
+      method: "POST",
+      body: fd,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(json.error || `Upload failed (${res.status})`);
     }
-
-    const { data } = supabase.storage
-      .from("announcement-images")
-      .getPublicUrl(path);
-    if (!data?.publicUrl) {
-      throw new Error("Public URL ማግኘት አልተቻለም። Bucket public መሆኑን ያረጋግጡ።");
-    }
-    return data.publicUrl;
+    if (!json.url) throw new Error("URL አልተመለሰም");
+    return json.url as string;
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -100,67 +97,91 @@ export function AnnouncementForm() {
     setError(null);
     setOk(null);
 
-    const supabase = createClient();
-    const slug = toSlug(titleAm);
-
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        setError("እባክዎ እንደገና ይግቡ (session አልተገኘም)።");
-        setSaving(false);
-        return;
-      }
+      let image_url: string | null | undefined = undefined;
 
-      let image_url: string | null = null;
       if (imageFile) {
         try {
-          image_url = await uploadImage(supabase, slug);
+          image_url = await uploadViaApi(imageFile);
         } catch (imgErr) {
           const detail =
             imgErr instanceof Error ? imgErr.message : String(imgErr);
-          setError(`ምስል መጫን አልተሳካም፦ ${detail} — ጽሁፉ ብቻ ይቀመጣል።`);
+          setError(`ምስል መጫን አልተሳካም፦ ${detail}`);
+          setSaving(false);
+          return;
         }
+      } else if (removeImage) {
+        image_url = null;
       }
 
-      const { error: err } = await supabase.from("announcements").insert({
-        title_am: titleAm.trim(),
-        body_am: bodyAm.trim(),
-        slug,
-        published,
-        is_featured: featured,
-        published_at: published ? new Date().toISOString() : null,
-        image_url,
-      });
+      if (edit) {
+        const payload: Record<string, unknown> = {
+          id: edit.id,
+          title_am: titleAm.trim(),
+          body_am: bodyAm.trim(),
+          published,
+          is_featured: featured,
+        };
+        if (image_url !== undefined) payload.image_url = image_url;
 
-      if (err) {
-        setError(err.message);
-        setSaving(false);
-        return;
+        const res = await fetch("/api/admin/announcements", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setError(json.error || "ማዘመን አልተሳካም");
+          setSaving(false);
+          return;
+        }
+        setOk("ተዘምኗል");
+        onDone?.();
+        router.refresh();
+      } else {
+        const res = await fetch("/api/admin/announcements", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title_am: titleAm.trim(),
+            body_am: bodyAm.trim(),
+            published,
+            is_featured: featured,
+            image_url: image_url ?? null,
+          }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setError(json.error || "መፍጠር አልተሳካም");
+          setSaving(false);
+          return;
+        }
+        setTitleAm("");
+        setBodyAm("");
+        setFeatured(true);
+        setPublished(true);
+        setImageFile(null);
+        setImagePreview(null);
+        setRemoveImage(false);
+        if (fileRef.current) fileRef.current.value = "";
+        setOk(image_url ? "ወቅታዊ ጉዳይ + ምስል ተመዝግቧል" : "ወቅታዊ ጉዳይ ተመዝግቧል");
+        router.refresh();
       }
-
-      setTitleAm("");
-      setBodyAm("");
-      setFeatured(true);
-      setPublished(true);
-      clearImage();
-      setOk(
-        image_url
-          ? "ወቅታዊ ጉዳይ + ምስል ተመዝግቧል"
-          : imageFile
-            ? "ጽሁፍ ተመዝግቧል (ምስል አልገባም)"
-            : "ወቅታዊ ጉዳይ ተመዝግቧል"
-      );
-      router.refresh();
     } catch (ex) {
       setError(ex instanceof Error ? ex.message : "ስህተት ተከስቷል");
     }
     setSaving(false);
   }
 
+  const isEdit = Boolean(edit);
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      {isEdit && (
+        <p className="text-xs text-[var(--primary)] amharic font-medium">
+          እየተስተካከለ · {edit?.title_am}
+        </p>
+      )}
       <div>
         <label className="block text-sm font-medium mb-1 amharic">ርዕስ</label>
         <input
@@ -193,7 +214,7 @@ export function AnnouncementForm() {
           accept="image/jpeg,image/png,image/webp,image/gif"
           onChange={onFileChange}
           className="hidden"
-          id="ann-image"
+          id={isEdit ? "ann-image-edit" : "ann-image"}
         />
         {imagePreview ? (
           <div className="relative overflow-hidden rounded-xl border border-[var(--border)]">
@@ -214,7 +235,7 @@ export function AnnouncementForm() {
           </div>
         ) : (
           <label
-            htmlFor="ann-image"
+            htmlFor={isEdit ? "ann-image-edit" : "ann-image"}
             className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--border)] bg-[var(--muted)]/30 px-4 py-8 text-center transition hover:bg-[var(--muted)]/50"
           >
             <ImagePlus className="h-8 w-8 text-[var(--primary)]/60" />
@@ -252,13 +273,28 @@ export function AnnouncementForm() {
         </p>
       )}
       {ok && <p className="text-sm text-emerald-600 amharic">{ok}</p>}
-      <button
-        type="submit"
-        disabled={saving}
-        className="w-full rounded-xl bg-[var(--primary)] text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50 amharic"
-      >
-        {saving ? "እየተቀመጠ…" : "ወቅታዊ ጉዳይ ፍጠር"}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="submit"
+          disabled={saving}
+          className="flex-1 rounded-xl bg-[var(--primary)] text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50 amharic"
+        >
+          {saving
+            ? "እየተቀመጠ…"
+            : isEdit
+              ? "ለውጦችን አስቀምጥ"
+              : "ወቅታዊ ጉዳይ ፍጠር"}
+        </button>
+        {isEdit && onDone && (
+          <button
+            type="button"
+            onClick={onDone}
+            className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm amharic"
+          >
+            ሰርዝ
+          </button>
+        )}
+      </div>
     </form>
   );
 }
