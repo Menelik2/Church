@@ -40,7 +40,8 @@ export default async function AdminDashboard() {
   const [
     articlesCount,
     announcementsCount,
-    unreadMessages,
+    unreadContact,
+    unreadServantNotifs,
     eventsCount,
     pendingMembership,
     onboardingOpen,
@@ -52,6 +53,9 @@ export default async function AdminDashboard() {
       (q as { eq: (c: string, v: boolean) => unknown }).eq("published", true)
     ),
     safeCount(supabase, "contact_messages", (q) =>
+      (q as { eq: (c: string, v: boolean) => unknown }).eq("is_read", false)
+    ),
+    safeCount(supabase, "membership_notifications", (q) =>
       (q as { eq: (c: string, v: boolean) => unknown }).eq("is_read", false)
     ),
     safeCount(supabase, "events", (q) =>
@@ -73,6 +77,8 @@ export default async function AdminDashboard() {
       (q as { eq: (c: string, v: string) => unknown }).eq("status", "active")
     ),
   ]);
+
+  const unreadMessages = unreadContact + unreadServantNotifs;
 
   let attendanceAlerts = 0;
   try {
@@ -122,7 +128,7 @@ export default async function AdminDashboard() {
     {
       label: "ያልተነቡ መልዕክቶች",
       value: unreadMessages,
-      href: "/admin/messages",
+      href: "/admin/messages?tab=servants",
       icon: Mail,
       alert: unreadMessages > 0,
     },
