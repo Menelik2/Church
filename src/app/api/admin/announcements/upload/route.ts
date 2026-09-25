@@ -56,7 +56,6 @@ export async function POST(request: Request) {
 
     const raw = Buffer.from(await file.arrayBuffer());
 
-    // --- Image compression middleware ---
     const compressed = await compressImageServer(raw, type || undefined);
 
     const path = `ann-${Date.now().toString(36)}-${Math.random()

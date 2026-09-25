@@ -26,7 +26,6 @@ const fullLinks = [
   { href: "/admin/settings", label: "ቅንብሮች", icon: Settings },
 ];
 
-/** Department managers only see workspace + their operational links */
 const restrictedLinks = [
   { href: "/admin/workspace", label: "ክፍል ዳሽቦርድ", icon: LayoutGrid },
   { href: "/admin/operations/reports", label: "ሪፖርቶች", icon: Workflow },
