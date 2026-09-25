@@ -175,36 +175,16 @@ export default async function WorkspacePage({
         .order("record_date", { ascending: false })
         .limit(50)
     ),
-    selectRows(
-      supabase.from("education_classes").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("class_attendance").select("*").limit(100)
-    ),
-    selectRows(
-      supabase.from("charity_projects").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("media_logs").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("mezmur_members").select("*").limit(100)
-    ),
-    selectRows(
-      supabase.from("mezmur_assets").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("mezmur_songs").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("mezmur_services").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("new_member_register").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("course_enrollments").select("*").limit(50)
-    ),
+    selectRows(supabase.from("education_classes").select("*").limit(50)),
+    selectRows(supabase.from("class_attendance").select("*").limit(100)),
+    selectRows(supabase.from("charity_projects").select("*").limit(50)),
+    selectRows(supabase.from("media_logs").select("*").limit(50)),
+    selectRows(supabase.from("mezmur_members").select("*").limit(100)),
+    selectRows(supabase.from("mezmur_assets").select("*").limit(50)),
+    selectRows(supabase.from("mezmur_songs").select("*").limit(50)),
+    selectRows(supabase.from("mezmur_services").select("*").limit(50)),
+    selectRows(supabase.from("new_member_register").select("*").limit(50)),
+    selectRows(supabase.from("course_enrollments").select("*").limit(50)),
     selectRows(
       supabase
         .from("department_records")
@@ -214,30 +194,14 @@ export default async function WorkspacePage({
         .order("created_at", { ascending: false })
         .limit(50)
     ),
-    selectRows(
-      supabase.from("correspondence").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("approvals").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("discipline_cases").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("action_plans").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("children_groups").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("children_activities").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("arts_events").select("*").limit(50)
-    ),
-    selectRows(
-      supabase.from("dept_discipline").select("*").limit(50)
-    ),
+    selectRows(supabase.from("official_correspondence").select("*").limit(50)),
+    selectRows(supabase.from("chair_approvals").select("*").limit(50)),
+    selectRows(supabase.from("executive_discipline").select("*").limit(50)),
+    selectRows(supabase.from("annual_action_plans").select("*").limit(50)),
+    selectRows(supabase.from("children_groups").select("*").limit(50)),
+    selectRows(supabase.from("children_activities").select("*").limit(50)),
+    selectRows(supabase.from("arts_events").select("*").limit(50)),
+    selectRows(supabase.from("disciplinary_cases").select("*").limit(50)),
   ]);
 
   const tabs = [
@@ -362,9 +326,7 @@ export default async function WorkspacePage({
         />
       )}
       {activeTab === "media" && <MediaPanel initial={mediaLogs} />}
-      {activeTab === "charity" && (
-        <CharityPanel initial={charityProjects} />
-      )}
+      {activeTab === "charity" && <CharityPanel initial={charityProjects} />}
       {(activeTab === "members" ||
         activeTab === "songs" ||
         activeTab === "services" ||
