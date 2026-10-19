@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { requireServiceDecision } from "@/lib/auth/require-admin";
 import { createClient } from "@/lib/supabase/server";
 import { MembershipActions } from "./MembershipActions";
 
@@ -31,7 +31,8 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default async function AdminMembershipOpsPage() {
-  await requireAdmin();
+  // §4.1 — approving membership = service decision; not editor-only
+  await requireServiceDecision();
   const supabase = await createClient();
   const { data: rows } = await supabase
     .from("membership_applications")
@@ -49,7 +50,7 @@ export default async function AdminMembershipOpsPage() {
             የአባልነት ጥያቄዎች
           </h1>
           <p className="text-sm text-[var(--foreground)]/60 mt-1 amharic">
-            አንቀጽ 14 — መመዘኛ መስፈርቶች · በመጠባበቅ: {pending}
+            አንቀጽ 14 — መመዘኛ መስፈርቶች · በመጠባበቅ: {pending} · ውሳኔ በሰው ብቻ
           </p>
         </div>
         <Link
@@ -63,22 +64,6 @@ export default async function AdminMembershipOpsPage() {
 
       <ul className="mt-6 space-y-4">
         {(rows ?? []).map((r) => {
-          const flags = [
-            r.is_orthodox,
-            r.completed_course,
-            r.accepts_doctrine,
-            r.respects_bylaws,
-            r.proper_attire,
-            r.has_confessor,
-            r.will_pay_monthly,
-            !!r.preferred_stage,
-            r.church_marriage !== false && r.church_marriage !== null
-              ? true
-              : r.church_marriage === false
-                ? false
-                : !!r.church_marriage,
-          ];
-          // church_marriage can be null; count as checked if true OR if they left message about confessor path
           const score =
             [
               r.is_orthodox,
@@ -134,7 +119,7 @@ export default async function AdminMembershipOpsPage() {
                   {STAGE_LABEL[r.preferred_stage] || r.preferred_stage || "—"}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {CRITERIA.map((c, i) => {
+                  {CRITERIA.map((c) => {
                     const ok =
                       c.key === "preferred_stage"
                         ? !!r.preferred_stage

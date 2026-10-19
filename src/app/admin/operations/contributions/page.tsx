@@ -1,9 +1,10 @@
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { requireFinance } from "@/lib/auth/require-admin";
 import { createClient } from "@/lib/supabase/server";
 import { ContributionForm } from "./ContributionForm";
 
 export default async function AdminContributionsPage() {
-  await requireAdmin();
+  // §4.1 — accounting data only for authorized finance / leadership
+  await requireFinance();
   const supabase = await createClient();
   const now = new Date();
   const year = now.getFullYear();
@@ -19,7 +20,7 @@ export default async function AdminContributionsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-[var(--primary)] amharic">ወርሃዊ መዋጮ</h1>
-      <p className="text-sm text-[var(--foreground)]/60 mt-1 amharic">አንቀጽ 12/14 — {year}/{month}</p>
+      <p className="text-sm text-[var(--foreground)]/60 mt-1 amharic">አንቀጽ 12/14 — {year}/{month} · የሒሳብ መረጃ (አመራር ብቻ)</p>
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
           <h2 className="font-semibold amharic mb-4">መዋጮ መመዝገብ</h2>

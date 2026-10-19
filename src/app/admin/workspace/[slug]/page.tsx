@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth/require-admin";
+import { requireWorkspaceAccess } from "@/lib/auth/require-admin";
 import { getWorkspace, DEPARTMENT_WORKSPACES } from "@/data/department-workspaces";
+import { DEPT_DUTIES, type DeptCode } from "@/lib/auth/capabilities";
 import { createClient } from "@/lib/supabase/server";
 import { TaskPanel } from "@/components/workspace/TaskPanel";
 import { FinancePanel } from "@/components/workspace/FinancePanel";
@@ -19,7 +20,7 @@ import { ChairPanel } from "@/components/workspace/ChairPanel";
 import { ChildrenPanel } from "@/components/workspace/ChildrenPanel";
 import { ArtsPanel } from "@/components/workspace/ArtsPanel";
 import { DeptDisciplinePanel } from "@/components/workspace/DeptDisciplinePanel";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, Shield } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -96,6 +97,8 @@ const TAB_LABELS: Record<string, string> = {
   discipline: "ክትትል",
   children: "ሕፃናት",
   chair: "ሰብሳቢ",
+  approvals: "ፈቃድ",
+  choir: "መዝሙር",
 };
 
 export default async function WorkspacePage({
@@ -105,11 +108,12 @@ export default async function WorkspacePage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ tab?: string }>;
 }) {
-  await requireStaff();
   const { slug } = await params;
   const { tab } = await searchParams;
   const ws = getWorkspace(slug);
   if (!ws) notFound();
+
+  const { canWrite } = await requireWorkspaceAccess(slug);
 
   const activeTab =
     tab && (ws.modules.includes(tab as never) || tab === "checkout")
@@ -117,6 +121,7 @@ export default async function WorkspacePage({
       : "overview";
 
   const supabase = await createClient();
+  const duty = DEPT_DUTIES[slug as DeptCode];
 
   const [
     tasks,
@@ -215,7 +220,7 @@ export default async function WorkspacePage({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link
-            href="/admin/departments"
+            href="/admin/workspace"
             className="inline-flex items-center gap-1 text-sm text-[var(--primary)] amharic mb-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -227,9 +232,13 @@ export default async function WorkspacePage({
           {ws.title_en && (
             <p className="text-sm text-[var(--foreground)]/55">{ws.title_en}</p>
           )}
-          {ws.description_am && (
-            <p className="mt-2 text-sm text-[var(--foreground)]/70 amharic max-w-xl">
-              {ws.description_am}
+          <p className="mt-2 text-sm text-[var(--foreground)]/70 amharic max-w-xl">
+            {duty?.duties_am ?? ws.description_am}
+          </p>
+          {!canWrite && (
+            <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-700 amharic rounded-lg bg-amber-50 px-2 py-1 border border-amber-200">
+              <Shield className="h-3.5 w-3.5" />
+              ንባብ ብቻ — መጻፍ አልተፈቀደም
             </p>
           )}
         </div>
@@ -330,7 +339,8 @@ export default async function WorkspacePage({
       {(activeTab === "members" ||
         activeTab === "songs" ||
         activeTab === "services" ||
-        activeTab === "assets") && (
+        activeTab === "assets" ||
+        activeTab === "choir") && (
         <MezmurPanel
           initialMembers={mezmurMembers as never}
           initialAssets={mezmurAssets as never}
@@ -378,7 +388,7 @@ export default async function WorkspacePage({
           initialActivities={childrenActivities as never}
         />
       )}
-      {activeTab === "chair" && (
+      {(activeTab === "chair" || activeTab === "approvals") && (
         <ChairPanel
           initialCorr={correspondence as never}
           initialApprovals={approvals as never}
