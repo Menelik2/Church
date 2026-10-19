@@ -23,8 +23,11 @@ export type Profile = {
   updated_at: string;
 };
 
-/** Full admin (content + operations + settings) */
+/** Full content admin (CMS) */
 export const ADMIN_ROLES: UserRole[] = ["super_admin", "admin", "editor"];
+
+/** Leadership: finance, discipline, service/punishment decisions (§4.1) */
+export const LEADERSHIP_ROLES: UserRole[] = ["super_admin", "admin"];
 
 /** Staff who may enter the admin shell (includes department managers) */
 export const STAFF_ROLES: UserRole[] = [
@@ -59,7 +62,7 @@ export async function getSessionProfile(): Promise<{
 }
 
 /**
- * Require one of the given roles (default: full admin).
+ * Require one of the given roles (default: full admin CMS).
  * Redirects to login if not authenticated / not allowed.
  */
 export async function requireAdmin(
@@ -89,10 +92,65 @@ export async function requireStaff(): Promise<{
   return requireAdmin(STAFF_ROLES);
 }
 
+/** §4.1 — Accounting / finance data only */
+export async function requireFinance(): Promise<{
+  userId: string;
+  profile: Profile;
+}> {
+  return requireAdmin(LEADERSHIP_ROLES);
+}
+
+/** §4.1 — Discipline & ethics only for authorized bodies */
+export async function requireDiscipline(): Promise<{
+  userId: string;
+  profile: Profile;
+}> {
+  return requireAdmin(LEADERSHIP_ROLES);
+}
+
+/**
+ * §4.1 — Service assignment or punishment decisions.
+ * Content/system editor alone must not decide these.
+ */
+export async function requireServiceDecision(): Promise<{
+  userId: string;
+  profile: Profile;
+}> {
+  return requireAdmin(LEADERSHIP_ROLES);
+}
+
+/**
+ * §4.1 — Children data & photos (elevated protection).
+ * Leadership always; department_manager only when assigned to hitsanat
+ * (enforced further by RLS `can_access_children`).
+ */
+export async function requireChildrenAccess(): Promise<{
+  userId: string;
+  profile: Profile;
+}> {
+  return requireAdmin(["super_admin", "admin", "department_manager"]);
+}
+
 export function isFullAdmin(role: UserRole): boolean {
   return ADMIN_ROLES.includes(role);
 }
 
 export function isStaffRole(role: UserRole): boolean {
   return STAFF_ROLES.includes(role);
+}
+
+export function isLeadership(role: UserRole): boolean {
+  return LEADERSHIP_ROLES.includes(role);
+}
+
+export function canViewFinance(role: UserRole): boolean {
+  return LEADERSHIP_ROLES.includes(role);
+}
+
+export function canManageDiscipline(role: UserRole): boolean {
+  return LEADERSHIP_ROLES.includes(role);
+}
+
+export function canDecideServiceOrPunishment(role: UserRole): boolean {
+  return LEADERSHIP_ROLES.includes(role);
 }
