@@ -2,6 +2,8 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { createClient } from "@/lib/supabase/server";
 import { DepartmentsClient } from "./DepartmentsClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDepartmentsPage() {
   await requireAdmin();
   const supabase = await createClient();
@@ -17,13 +19,13 @@ export default async function AdminDepartmentsPage() {
   }> = [];
 
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("departments")
       .select(
         "id, title_am, title_en, slug, order_index, published, description_am"
       )
       .order("order_index", { ascending: true });
-    departments = data ?? [];
+    if (!error && data) departments = data;
   } catch {
     departments = [];
   }
